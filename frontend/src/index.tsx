@@ -1,10 +1,36 @@
-import React from "react";
+import { createMuiTheme, CssBaseline, ThemeProvider } from "@material-ui/core";
 import ReactDOM from "react-dom";
+import axios from "axios";
 import App from "./App";
 
+axios.defaults.xsrfCookieName = "csrftoken";
+axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
+
+const theme = createMuiTheme({
+  palette: {
+    type: "light",
+  },
+  typography: {
+    fontFamily: [
+      "Roboto",
+      '"M PLUS Rounded 1c"',
+      "-apple-system",
+      "BlinkMacSystemFont",
+      '"Segoe UI"',
+      '"Helvetica Neue"',
+      "Arial",
+      "sans-serif",
+      '"Apple Color Emoji"',
+      '"Segoe UI Emoji"',
+      '"Segoe UI Symbol"',
+    ].join(),
+  },
+});
+
 ReactDOM.render(
-  <React.StrictMode>
+  <ThemeProvider theme={theme}>
+    <CssBaseline />
     <App />
-  </React.StrictMode>,
+  </ThemeProvider>,
   document.getElementById("root")
 );
