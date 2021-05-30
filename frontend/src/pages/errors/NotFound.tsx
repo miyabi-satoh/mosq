@@ -1,10 +1,10 @@
-import React from "react";
+import { MainLayout } from "layouts";
 
 function NotFound() {
   return (
-    <div>
+    <MainLayout>
       <p>Not Found</p>
-    </div>
+    </MainLayout>
   );
 }
 

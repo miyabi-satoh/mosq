@@ -9,18 +9,20 @@ import {
 import Alert from "@material-ui/lab/Alert";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm, useWatch } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { MainLayout } from "layouts/MainLayout";
 import { apiPrints, apiUnits, TGrade, TUnit } from "api";
 
 interface IFormInput {
   title: string;
-  details: Array<string>;
+  details: string[];
   question_count: string;
   action: string;
 }
 
-function MathContest() {
+function PrintForm() {
+  const { printId } = useParams<{ printId: string }>();
+  const [error, setError] = useState(false);
   const [unitList, setUnitList] = useState<TUnit[]>([]);
   const {
     register,
@@ -37,11 +39,6 @@ function MathContest() {
   });
 
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
-    // console.log(data.title);
-    // console.log(data.details);
-    // console.log(data.action);
-    // console.log(data.question_count);
-
     const params = {
       title: data.title,
       details: data.details
@@ -76,20 +73,18 @@ function MathContest() {
     async function fetchUnits() {
       try {
         setUnitList(await apiUnits.list());
-      } catch (error) {}
-      // try {
-      //   const resp = await axios.get(`/api/units/`);
-      //   setUnitList(resp.data);
-      // } catch (error) {
-      //   console.log(error);
-      //   if (error.response) {
-      //     const { status, statusText } = error.response;
-      //     console.log(`Error ${status} : ${statusText}`);
-      //   }
-      // }
+        if (printId !== "add") {
+          const data = await apiPrints.get(Number(printId));
+          setValue("title", data.title);
+        }
+      } catch (error) {
+        if (error?.response?.status === 404) {
+          setError(true);
+        }
+      }
     }
     fetchUnits();
-  }, []);
+  }, [setValue, printId]);
 
   return (
     <MainLayout>
@@ -102,7 +97,7 @@ function MathContest() {
         <Grid container spacing={4} alignItems="center">
           <Grid item xs={12}>
             <Typography component="h2" variant="h6">
-              プリント定義
+              プリント{printId === "add" ? "追加" : "編集"}
             </Typography>
           </Grid>
           <Grid item xs={12}>
@@ -210,4 +205,4 @@ function MathContest() {
   );
 }
 
-export default MathContest;
+export default PrintForm;
