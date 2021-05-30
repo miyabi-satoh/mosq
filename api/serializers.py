@@ -32,29 +32,20 @@ class UnitSerializer(serializers.ModelSerializer):
 class PrintDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrintDetail
-        fields = ['unit', 'quantity']
+        fields = ['id', 'unit', 'quantity']
 
 
 class PrintSerializer(serializers.ModelSerializer):
-    print_detail = PrintDetailSerializer(many=True)
+    details = PrintDetailSerializer(many=True)
 
     class Meta:
         model = PrintHead
-        fields = ['title', 'print_detail']
+        fields = '__all__'
 
     def create(self, validated_data):
-        result_dict = {}
-        detail_list = []
+        details_data = validated_data.pop('details')
+        printhead = PrintHead.objects.create(**validated_data)
+        for detail_data in details_data:
+            PrintDetail.objects.create(printhead=printhead, **detail_data)
 
-        print_detail = validated_data.pop('print_detail')
-
-        created_printhead = PrintHead.objects.create(**validated_data)
-        result_dict['head_id'] = created_printhead.id
-
-        for print_detail_data in print_detail:
-            created_printdetail = PrintDetail.objects.create(
-                printhead=created_printhead, **print_detail_data)
-            detail_list.append(created_printdetail.id)
-
-        result_dict['detail_id'] = detail_list
-        return result_dict
+        return printhead

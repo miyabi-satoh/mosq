@@ -64,7 +64,7 @@ class PrintHead(models.Model):
 
 class PrintDetail(models.Model):
     printhead = models.ForeignKey(
-        PrintHead, on_delete=models.CASCADE, verbose_name='プリントヘッダ')
+        PrintHead, related_name='details', on_delete=models.CASCADE, verbose_name='プリントヘッダ')
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE, verbose_name='単元')
     quantity = models.PositiveSmallIntegerField(verbose_name='問題数')
 
@@ -72,5 +72,12 @@ class PrintDetail(models.Model):
         return f'{self.printhead} {self.unit} {self.quantity}問'
 
     class Meta:
+        ordering = ['printhead', 'unit']
         verbose_name = 'プリント明細'
         verbose_name_plural = 'プリント明細'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['printhead', 'unit'],
+                name='printdetail_unique'
+            ),
+        ]
