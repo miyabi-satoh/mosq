@@ -130,7 +130,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # load the secret key
 try:
-
     from .local_settings import *  # noqa
 except ImportError:
     pass
+
+
+MEDIA_ROOT = Path(BASE_DIR).joinpath('media')

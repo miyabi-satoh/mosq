@@ -12,6 +12,8 @@ export class BaseAPI {
   endpoint: string;
 
   constructor() {
+    axios.defaults.xsrfCookieName = "csrftoken";
+    axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
     this.endpoint = "";
   }
 
@@ -26,8 +28,8 @@ export class BaseAPI {
     }
   }
 
-  async get(pk: number) {
-    const url = `${this.endpoint}${pk}`;
+  async get(pk: string) {
+    const url = `${this.endpoint}${pk}/`;
     try {
       const resp = await axios.get(url);
       return resp.data;
@@ -41,6 +43,28 @@ export class BaseAPI {
     const url = `${this.endpoint}`;
     try {
       const resp = await axios.post(url, params);
+      return resp.data;
+    } catch (error) {
+      clg(error);
+      throw error;
+    }
+  }
+
+  async update(pk: string, params: any) {
+    const url = `${this.endpoint}${pk}/`;
+    try {
+      const resp = await axios.put(url, params);
+      return resp.data;
+    } catch (error) {
+      clg(error);
+      throw error;
+    }
+  }
+
+  async delete(pk: string) {
+    const url = `${this.endpoint}${pk}/`;
+    try {
+      const resp = await axios.delete(url);
       return resp.data;
     } catch (error) {
       clg(error);
