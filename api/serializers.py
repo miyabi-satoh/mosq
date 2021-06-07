@@ -49,3 +49,12 @@ class PrintSerializer(serializers.ModelSerializer):
             PrintDetail.objects.create(printhead=printhead, **detail_data)
 
         return printhead
+
+    def update(self, instance, validated_data):
+        details_data = validated_data.pop('details')
+        PrintDetail.objects.filter(printhead=instance).delete()
+        for detail_data in details_data:
+            PrintDetail.objects.create(printhead=instance, **detail_data)
+        instance.title = validated_data.get('title', instance.title)
+        instance.save()
+        return instance

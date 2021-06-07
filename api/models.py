@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Grade(models.Model):
@@ -81,3 +82,17 @@ class PrintDetail(models.Model):
                 name='printdetail_unique'
             ),
         ]
+
+
+class Archive(models.Model):
+    file = models.FileField('ファイル', upload_to='archive')
+    title = models.CharField('タイトル', max_length=100)
+    created_at = models.DateTimeField('作成日時', default=timezone.now)
+
+    def __str__(self) -> str:
+        return f"{self.title}@{self.created_at}"
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'プリントアーカイブ'
+        verbose_name_plural = 'プリントアーカイブ'
