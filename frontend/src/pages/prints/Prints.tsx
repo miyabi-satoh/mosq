@@ -85,7 +85,15 @@ function Index() {
                       </Typography>
                     </CardContent>
                     <CardActions>
-                      <Button size="small" color="primary">
+                      <Button
+                        size="small"
+                        color="primary"
+                        onClick={() =>
+                          window.open(
+                            `http://localhost:8000/printout/${printhead.id}/`
+                          )
+                        }
+                      >
                         印刷
                       </Button>
                     </CardActions>
@@ -107,7 +115,7 @@ function Index() {
 function Prints() {
   return (
     <Switch>
-      <Route path={`${thisUrl}/:printId`} component={PrintForm} />
+      <Route exact path={`${thisUrl}/:printId`} component={PrintForm} />
       <Route component={Index} />
     </Switch>
   );
