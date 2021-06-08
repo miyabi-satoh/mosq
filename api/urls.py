@@ -9,7 +9,6 @@ router.register(r'prints', views.PrintViewSet)
 
 urlpatterns = [
     path('hello/', views.HelloView.as_view()),
-    path('prints/<int:printhead_id>/printout/', views.print_out),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

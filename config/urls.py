@@ -15,9 +15,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from api.views import print_out
 
 urlpatterns = [
     path('', include('frontend.urls')),
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
+    path('printout/<int:printhead_id>/', print_out),
+
 ]
