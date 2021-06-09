@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Grade, PrintDetail, PrintHead, Unit, Question
+from .models import Archive, Grade, PrintDetail, PrintHead, Unit, Question
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -58,3 +58,9 @@ class PrintSerializer(serializers.ModelSerializer):
         instance.title = validated_data.get('title', instance.title)
         instance.save()
         return instance
+
+
+class ArchiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Archive
+        fields = '__all__'
