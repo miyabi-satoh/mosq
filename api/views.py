@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view
 from .models import Archive, Unit, PrintHead
-from .serializers import PrintSerializer, UnitSerializer
+from .serializers import ArchiveSerializer, PrintSerializer, UnitSerializer
 
 
 class PrintViewSet(viewsets.ModelViewSet):
@@ -25,6 +25,12 @@ class UnitViewSet(viewsets.ReadOnlyModelViewSet):
     # ).filter(question_count__gt=0)
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
+    pagination_class = None
+
+
+class ArchiveViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Archive.objects.all()
+    serializer_class = ArchiveSerializer
 
 
 class HelloView(views.APIView):
