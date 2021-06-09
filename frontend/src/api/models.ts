@@ -23,3 +23,9 @@ export type TPrintHead = TModelBase & {
   title: string;
   details: TPrintDetail[];
 };
+
+export type TArchive = TModelBase & {
+  file: string;
+  title: string;
+  created_at: Date;
+};
