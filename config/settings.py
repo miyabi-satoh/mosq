@@ -136,3 +136,11 @@ except ImportError:
 
 
 MEDIA_ROOT = Path(BASE_DIR).joinpath('media')
+
+
+# Setting the pagination style
+# https://www.django-rest-framework.org/api-guide/pagination/
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100
+}
