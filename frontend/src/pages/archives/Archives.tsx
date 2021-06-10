@@ -9,6 +9,7 @@ import {
 } from "@material-ui/core";
 import { TArchive } from "api";
 import { apiArchives } from "api/archives";
+import { Spacer } from "components";
 import { formatDistance } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useState, useEffect } from "react";
@@ -17,6 +18,16 @@ import { Switch, Route } from "react-router-dom";
 function Index() {
   const [archiveList, setArchiveList] =
     useState<TArchive[] | undefined>(undefined);
+
+  const handleRemove = async (id: string) => {
+    try {
+      await apiArchives.delete(id);
+
+      const data = await apiArchives.list();
+      console.log(data);
+      setArchiveList(data.results);
+    } catch (error) {}
+  };
 
   useEffect(() => {
     let unmounted = false;
@@ -45,7 +56,7 @@ function Index() {
           アーカイブ一覧
         </Typography>
       </Grid>
-      <Grid item container spacing={2} alignItems="center">
+      <Grid item container>
         {archiveList?.length ? (
           archiveList.map((archive) => {
             return (
@@ -75,15 +86,25 @@ function Index() {
                     >
                       印刷
                     </Button>
+                    <Spacer />
+                    <Button
+                      color="secondary"
+                      variant="outlined"
+                      onClick={() => handleRemove(`${archive.id}`)}
+                    >
+                      削除
+                    </Button>
                   </CardActions>
                 </Card>
               </Grid>
             );
           })
         ) : (
-          <Box textAlign="center" py={4}>
-            アーカイブはありません。
-          </Box>
+          <Grid item xs={12}>
+            <Box textAlign="center" py={4}>
+              アーカイブはありません。
+            </Box>
+          </Grid>
         )}
       </Grid>
     </Grid>

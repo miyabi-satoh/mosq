@@ -1,0 +1,44 @@
+%%%%% 計算コンテスト用(5問/ページ)
+\documentclass[uplatex,a4j,11pt]{jsarticle}
+\usepackage[margin=15mm]{geometry}
+\usepackage{emath}
+\usepackage{bxpapersize}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+\setlength\parindent{0pt}
+
+\setlist[enumerate]{
+leftmargin=*,
+itemindent=0pt,
+itemsep=1mm,
+labelsep=1ex,
+label=(\arabic*)}
+
+\pagestyle{fancy}
+\lhead{@[title]@}
+
+\begin{document}
+\begin{enumerate}
+% for item in items:
+  \item \begin{minipage}[t][4.72cm][t]{\linewidth}
+    @[item.question\_text]@
+    \vfill
+    \hfill
+    \framebox[0.5\linewidth]{\rule{0ex}{7mm}}
+    \end{minipage}
+% endfor
+\end{enumerate}
+\newpage
+\lhead{@[title]@ 解答}
+\cfoot{}
+\begin{multicols}{3}
+\begin{enumerate}
+% for item in items:
+  \item @[item.answer\_text]@
+% endfor
+\end{enumerate}
+\newpage
+\end{multicols}
+\end{document}

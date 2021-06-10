@@ -1,0 +1,55 @@
+%%%%% 小テスト用(8問x4セット/ページ)
+\documentclass[uplatex,a4j,11pt]{jsarticle}
+\usepackage[margin=15mm]{geometry}
+\usepackage{emath}
+\usepackage{bxpapersize}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+\renewcommand{\thesection}{\arabic{section}}
+\titleformat{\section}{\large}{No.\thesection}{1em}{}
+
+\setlength\parindent{0pt}
+
+\setlist[enumerate]{
+leftmargin=*,
+itemindent=0pt,
+itemsep=1mm,
+labelsep=1ex,
+label=(\arabic*)}
+
+\pagestyle{fancy}
+\lhead{@[title]@}
+
+\begin{document}
+% for section in data:
+\section{}
+\begin{multicols}{2}
+\begin{enumerate}
+% for item in section
+    \item @[item.question\_text]@
+% endfor
+\end{enumerate}
+\end{multicols}
+% if loop.index % 4 == 0:
+\newpage
+% endif
+% endfor
+
+\lhead{@[title]@ 解答}
+\begin{multicols}{2}
+% for section in data
+\section{}
+\begin{enumerate}
+% for item in section
+  \item @[item.answer\_text]@
+% endfor
+\end{enumerate}
+% if loop.index % 4 == 0:
+\newpage
+% endif
+% endfor
+\end{multicols}
+\end{document}

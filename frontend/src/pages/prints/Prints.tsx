@@ -9,7 +9,7 @@ import {
   CardActions,
   CardContent,
 } from "@material-ui/core";
-import { RouterButton, RouterLink } from "components";
+import { RouterButton, RouterLink, Spacer } from "components";
 import PrintForm from "./PrintForm";
 import { apiPrints, TPrintHead } from "api";
 
@@ -18,6 +18,16 @@ const thisUrl = "/prints";
 function Index() {
   const [printList, setPrintList] =
     useState<TPrintHead[] | undefined>(undefined);
+
+  const handleRemove = async (id: string) => {
+    try {
+      await apiPrints.delete(id);
+      const data = await apiPrints.list();
+      console.log(data);
+
+      setPrintList(data.results);
+    } catch (error) {}
+  };
 
   useEffect(() => {
     let unmounted = false;
@@ -57,19 +67,16 @@ function Index() {
         </RouterButton>
       </Grid>
       <Grid item container>
-        <Grid item xs={12} sm={6}>
-          {printList?.length ? (
-            printList.map((printhead) => {
-              const question_count = printhead.details.reduce(
-                (prev, current) => {
-                  const value = Number(current.quantity);
-                  return isNaN(value) ? prev : prev + value;
-                },
-                0
-              );
+        {printList?.length ? (
+          printList.map((printhead) => {
+            const question_count = printhead.details.reduce((prev, current) => {
+              const value = Number(current.quantity);
+              return isNaN(value) ? prev : prev + value;
+            }, 0);
 
-              return (
-                <Card variant="outlined" key={`printhead-${printhead.id}`}>
+            return (
+              <Grid item xs={12} sm={6} key={`printhead-${printhead.id}`}>
+                <Card variant="outlined">
                   <CardContent>
                     <Typography component="h3" variant="h5">
                       <RouterLink to={`${thisUrl}/${printhead.id}`}>
@@ -92,16 +99,26 @@ function Index() {
                     >
                       印刷
                     </Button>
+                    <Spacer />
+                    <Button
+                      color="secondary"
+                      variant="outlined"
+                      onClick={() => handleRemove(`${printhead.id}`)}
+                    >
+                      印刷
+                    </Button>
                   </CardActions>
                 </Card>
-              );
-            })
-          ) : (
+              </Grid>
+            );
+          })
+        ) : (
+          <Grid item xs={12}>
             <Box textAlign="center" py={4}>
               プリントセットは未登録です。
             </Box>
-          )}
-        </Grid>
+          </Grid>
+        )}
       </Grid>
     </Grid>
   );

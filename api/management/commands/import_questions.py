@@ -82,11 +82,11 @@ class Command(BaseCommand):
                 if not match:
                     self.stdout.write(text)
                     sys.exit('予期しないフォーマットです。')
-                question_text = match.group(1).strip()
+                question_text = match.group(1).replace("\\item", '').strip()
                 source_text = match.group(2).strip()
                 unit_code = match.group(3).strip()
                 url_text = match.group(4).strip()
-                answer_text = answer_list[index].strip()
+                answer_text = answer_list[index].replace("\\item", '').strip()
 
                 u = Unit.objects.get(unit_code=unit_code)
                 if not u:

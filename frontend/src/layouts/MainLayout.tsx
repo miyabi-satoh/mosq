@@ -83,12 +83,12 @@ export function MainLayout({ children, ...props }: ContainerProps) {
                 </Grid>
                 <Grid item xs={4}>
                   <RouterButton fullWidth color="inherit" to="/prints">
-                    プリントセット
+                    新規作成
                   </RouterButton>
                 </Grid>
                 <Grid item xs={4}>
                   <RouterButton fullWidth color="inherit" to="/archives">
-                    アーカイブ
+                    再印刷
                   </RouterButton>
                 </Grid>
               </Grid>
