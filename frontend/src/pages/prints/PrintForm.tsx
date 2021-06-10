@@ -20,7 +20,7 @@ interface IFormInput {
   action: string;
 }
 
-const backUrl = `/`;
+const backUrl = `/prints`;
 
 function PrintForm() {
   const history = useHistory();
