@@ -1,4 +1,12 @@
-import { AppBar, Box, Grid, Slide, Toolbar } from "@material-ui/core";
+import {
+  AppBar,
+  Box,
+  Fab,
+  Grid,
+  Slide,
+  Toolbar,
+  Zoom,
+} from "@material-ui/core";
 import { useScrollTrigger } from "@material-ui/core";
 import {
   createStyles,
@@ -7,6 +15,7 @@ import {
   Container,
   ContainerProps,
 } from "@material-ui/core";
+import { KeyboardArrowUp } from "@material-ui/icons";
 import { RouterButton } from "components";
 import React from "react";
 
@@ -22,16 +31,38 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: 0,
       backgroundColor: theme.palette.grey[50],
     },
+    scrollTop: {
+      position: "fixed",
+      bottom: theme.spacing(2),
+      right: theme.spacing(2),
+    },
   })
 );
 
 function HideOnScroll(props: React.PropsWithChildren<{}>) {
+  const classes = useStyles();
   const trigger = useScrollTrigger();
 
+  const handleClick = (event: React.MouseEvent) => {
+    window[`scrollTo`]({ top: 0, behavior: `smooth` });
+  };
+
   return (
-    <Slide appear={false} direction="down" in={!trigger}>
-      {props.children as React.ReactElement}
-    </Slide>
+    <>
+      <Slide appear={false} direction="down" in={!trigger}>
+        {props.children as React.ReactElement}
+      </Slide>
+      <Zoom in={trigger}>
+        <Fab
+          color="secondary"
+          size="small"
+          onClick={handleClick}
+          className={classes.scrollTop}
+        >
+          <KeyboardArrowUp />
+        </Fab>
+      </Zoom>
+    </>
   );
 }
 
@@ -65,7 +96,9 @@ export function MainLayout({ children, ...props }: ContainerProps) {
           </AppBar>
         </HideOnScroll>
         <Toolbar />
-        <Box my={2}>{children}</Box>
+        <Box mt={2} mb={10}>
+          {children}
+        </Box>
       </Container>
     </div>
   );
