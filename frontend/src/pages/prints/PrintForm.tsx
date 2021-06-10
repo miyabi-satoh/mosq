@@ -9,10 +9,9 @@ import {
 import Alert from "@material-ui/lab/Alert";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm, useWatch } from "react-hook-form";
-import { Link, useHistory, useParams } from "react-router-dom";
-import { MainLayout } from "layouts/MainLayout";
+import { useHistory, useParams } from "react-router-dom";
 import { apiPrints, apiUnits, TGrade, TPrintDetail, TUnit } from "api";
-import { RouterLink } from "components";
+import { RouterButton, RouterLink } from "components";
 
 interface IFormInput {
   title: string;
@@ -21,7 +20,7 @@ interface IFormInput {
   action: string;
 }
 
-const baseUrl = `/prints`;
+const backUrl = `/`;
 
 function PrintForm() {
   const history = useHistory();
@@ -62,10 +61,7 @@ function PrintForm() {
           ? await apiPrints.create(params)
           : await apiPrints.update(printId, params);
       console.log(data);
-      // if (data.action === "print") {
-      //   window.open("http://localhost:8000/", "_blank");
-      // }
-      history.push(baseUrl);
+      history.push(backUrl);
     } catch (error) {}
   };
 
@@ -128,120 +124,115 @@ function PrintForm() {
   }, [setValue, printId]);
 
   return (
-    <MainLayout>
-      <form noValidate onSubmit={handleSubmit(onSubmit)}>
-        <input
-          style={{ display: "none" }}
-          {...register("question_count", { required: true, min: 1 })}
-          type="number"
-        />
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12}>
-            <Typography component="h2" variant="h6">
-              プリントセットの{printId === "add" ? "追加" : "編集"}
-            </Typography>
-          </Grid>
-          {!loading &&
-            (fetchError ? (
+    <form noValidate onSubmit={handleSubmit(onSubmit)}>
+      <input
+        style={{ display: "none" }}
+        {...register("question_count", { required: true, min: 1 })}
+        type="number"
+      />
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={12}>
+          <Typography component="h2" variant="h6">
+            プリントセットの{printId === "add" ? "追加" : "編集"}
+          </Typography>
+        </Grid>
+        {!loading &&
+          (fetchError ? (
+            <Grid item xs={12}>
+              <div>対象データの取得に失敗しました。</div>
+              <div>
+                <RouterLink to={backUrl}>戻る</RouterLink>
+              </div>
+            </Grid>
+          ) : (
+            <>
               <Grid item xs={12}>
-                <div>対象データの取得に失敗しました。</div>
-                <div>
-                  <RouterLink to={baseUrl}>戻る</RouterLink>
-                </div>
+                <TextField
+                  size="small"
+                  inputProps={{
+                    ...register("title", {
+                      required: true,
+                    }),
+                  }}
+                  label="プリントのタイトル"
+                  error={!!errors.title}
+                  fullWidth
+                  autoFocus
+                  required
+                />
               </Grid>
-            ) : (
-              <>
-                <Grid item xs={12}>
-                  <TextField
-                    size="small"
-                    inputProps={{
-                      ...register("title", {
-                        required: true,
-                      }),
-                    }}
-                    label="プリントのタイトル"
-                    error={!!errors.title}
-                    fullWidth
-                    autoFocus
-                    required
-                  />
-                </Grid>
-                {unitList.map((unit: TUnit, i: number) => {
-                  const grade = unit.grade as TGrade;
-                  return (
-                    <Grid item xs={12} sm={6} md={4} key={`unit-${i}`}>
-                      <Box display="flex" alignItems="center">
-                        <TextField
-                          size="small"
-                          type="number"
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                {`${grade.grade_text}:${unit.unit_text}(${unit.question_count})`}
-                              </InputAdornment>
-                            ),
-                          }}
-                          inputProps={{
-                            ...register(`details.${i}` as keyof IFormInput, {
-                              min: 0,
-                              max: unit.question_count,
-                            }),
+              {unitList.map((unit: TUnit, i: number) => {
+                const grade = unit.grade as TGrade;
+                return (
+                  <Grid item xs={12} sm={6} md={4} key={`unit-${i}`}>
+                    <Box display="flex" alignItems="center">
+                      <TextField
+                        size="small"
+                        type="number"
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              {`${grade.grade_text}:${unit.unit_text}(${unit.question_count})`}
+                            </InputAdornment>
+                          ),
+                        }}
+                        inputProps={{
+                          ...register(`details.${i}` as keyof IFormInput, {
                             min: 0,
                             max: unit.question_count,
-                            style: { textAlign: "right" },
-                          }}
-                          onChange={handleChange}
-                          disabled={unit.question_count === 0}
-                          fullWidth
-                        />
-                      </Box>
-                    </Grid>
-                  );
-                })}
-                {errors.question_count && (
-                  <Grid item xs={12}>
-                    <Alert severity="error">問題数を設定してください。</Alert>
+                          }),
+                          min: 0,
+                          max: unit.question_count,
+                          style: { textAlign: "right" },
+                        }}
+                        onChange={handleChange}
+                        disabled={unit.question_count === 0}
+                        fullWidth
+                      />
+                    </Box>
                   </Grid>
-                )}
-                {errors.title && (
-                  <Grid item xs={12}>
-                    <Alert severity="error">
-                      プリントのタイトルを入力してください。
-                    </Alert>
-                  </Grid>
-                )}
-                {/* <Grid item container spacing={2} alignItems="center"> */}
-                <Grid item xs={12} sm={4}>
-                  <Box textAlign="center">全 {questionCount} 問</Box>
+                );
+              })}
+              {errors.question_count && (
+                <Grid item xs={12}>
+                  <Alert severity="error">問題数を設定してください。</Alert>
                 </Grid>
-                <Grid item xs={6} sm={4}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    component={Link}
-                    to="/prints"
-                  >
-                    戻る
-                  </Button>
+              )}
+              {errors.title && (
+                <Grid item xs={12}>
+                  <Alert severity="error">
+                    プリントのタイトルを入力してください。
+                  </Alert>
                 </Grid>
-                <Grid item xs={6} sm={4}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    color="secondary"
-                    type="submit"
-                    onClick={() => setValue("action", "save")}
-                  >
-                    保存
-                  </Button>
-                </Grid>
-                {/* </Grid> */}
-              </>
-            ))}
-        </Grid>
-      </form>
-    </MainLayout>
+              )}
+              <Grid item xs={12} sm={4}>
+                <Box textAlign="center">全 {questionCount} 問</Box>
+              </Grid>
+              <Grid item xs={6} sm={4}>
+                <RouterButton
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  to={backUrl}
+                >
+                  キャンセル
+                </RouterButton>
+              </Grid>
+              <Grid item xs={6} sm={4}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="secondary"
+                  type="submit"
+                  onClick={() => setValue("action", "save")}
+                >
+                  保存
+                </Button>
+              </Grid>
+            </>
+          ))}
+      </Grid>
+    </form>
   );
 }
 
