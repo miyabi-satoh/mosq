@@ -49,8 +49,8 @@ function Index() {
         {archiveList?.length ? (
           archiveList.map((archive) => {
             return (
-              <Grid item xs={12} sm={6}>
-                <Card variant="outlined" key={`archive-${archive.id}`}>
+              <Grid item xs={12} sm={6} key={`archive-${archive.id}`}>
+                <Card variant="outlined">
                   <CardContent>
                     <Typography component="h3" variant="h5">
                       {archive.title}
