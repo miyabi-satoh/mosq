@@ -1,3 +1,5 @@
+import { AppBar, Box, Grid, Slide, Toolbar } from "@material-ui/core";
+import { useScrollTrigger } from "@material-ui/core";
 import {
   createStyles,
   makeStyles,
@@ -5,6 +7,8 @@ import {
   Container,
   ContainerProps,
 } from "@material-ui/core";
+import { RouterButton } from "components";
+import React from "react";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -15,21 +19,54 @@ const useStyles = makeStyles((theme: Theme) =>
       minHeight: "100vh",
     },
     main: {
-      marginTop: theme.spacing(4),
-      marginBottom: theme.spacing(4),
-      paddingTop: theme.spacing(3),
-      paddingBottom: theme.spacing(3),
+      padding: 0,
       backgroundColor: theme.palette.grey[50],
     },
   })
 );
 
-export function MainLayout(props: ContainerProps) {
+function HideOnScroll(props: React.PropsWithChildren<{}>) {
+  const trigger = useScrollTrigger();
+
+  return (
+    <Slide appear={false} direction="down" in={!trigger}>
+      {props.children as React.ReactElement}
+    </Slide>
+  );
+}
+
+export function MainLayout({ children, ...props }: ContainerProps) {
   const classes = useStyles();
 
   return (
     <div className={classes.root}>
-      <Container {...props} component="main" className={classes.main} fixed />
+      <Container {...props} component="main" className={classes.main} fixed>
+        <HideOnScroll>
+          <AppBar>
+            <Toolbar disableGutters>
+              <Grid container>
+                <Grid item xs={4}>
+                  <RouterButton fullWidth color="inherit" to="/">
+                    Home
+                  </RouterButton>
+                </Grid>
+                <Grid item xs={4}>
+                  <RouterButton fullWidth color="inherit" to="/prints">
+                    プリントセット
+                  </RouterButton>
+                </Grid>
+                <Grid item xs={4}>
+                  <RouterButton fullWidth color="inherit" to="/archives">
+                    アーカイブ
+                  </RouterButton>
+                </Grid>
+              </Grid>
+            </Toolbar>
+          </AppBar>
+        </HideOnScroll>
+        <Toolbar />
+        <Box my={2}>{children}</Box>
+      </Container>
     </div>
   );
 }
