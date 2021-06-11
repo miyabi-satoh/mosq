@@ -43,7 +43,6 @@ class HelloView(views.APIView):
 @api_view()
 def print_out(request, printhead_id):
     printhead = get_object_or_404(PrintHead, pk=printhead_id)
-    # file = create_print(printhead)
     file = print_contest_pdf(printhead)
     if not file:
         return None
