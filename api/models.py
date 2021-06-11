@@ -58,9 +58,8 @@ class PrintHead(models.Model):
 
     @admin.display(description='問題数')
     def total_questions(self):
-        details = PrintDetail.objects.filter(printhead=self).all()
         total = 0
-        for detail in details:
+        for detail in self.details.all():
             total += detail.quantity
         return total
 
