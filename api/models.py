@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib import admin
 
 
 class Grade(models.Model):
@@ -54,6 +55,13 @@ class Question(models.Model):
 
 class PrintHead(models.Model):
     title = models.CharField('タイトル', max_length=100)
+
+    @admin.display(description='問題数')
+    def total_questions(self):
+        total = 0
+        for detail in self.details.all():
+            total += detail.quantity
+        return total
 
     def __str__(self) -> str:
         return self.title

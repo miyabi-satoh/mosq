@@ -1,7 +1,4 @@
-# from django.shortcuts import render
-# from django.db.models import Count
-# from django.core.files import File
-from api.utils import create_print
+from api.utils import print_contest_pdf
 from django.shortcuts import get_object_or_404
 from django.http.response import FileResponse
 from rest_framework import views, viewsets
@@ -28,7 +25,8 @@ class UnitViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class ArchiveViewSet(viewsets.ReadOnlyModelViewSet):
+class ArchiveViewSet(viewsets.ModelViewSet):
+    permission_classes = [AllowAny]
     queryset = Archive.objects.all()
     serializer_class = ArchiveSerializer
 
@@ -45,7 +43,8 @@ class HelloView(views.APIView):
 @api_view()
 def print_out(request, printhead_id):
     printhead = get_object_or_404(PrintHead, pk=printhead_id)
-    file = create_print(printhead)
+    # file = create_print(printhead)
+    file = print_contest_pdf(printhead)
     if not file:
         return None
 
