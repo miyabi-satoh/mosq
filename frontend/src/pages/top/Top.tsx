@@ -1,15 +1,70 @@
-import { Box, Typography } from "@material-ui/core";
-import { RouterLink } from "components";
+import {
+  Box,
+  createStyles,
+  Hidden,
+  makeStyles,
+  Theme,
+  Typography,
+} from "@material-ui/core";
+import { RouterButton, RouterLink, Spacer } from "components";
+
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    authButton: {
+      minWidth: 100,
+      marginRight: theme.spacing(2),
+      "&:last-child": {
+        marginRight: 0,
+      },
+    },
+    pageTitle: {
+      margin: theme.spacing(2),
+      marginBottom: theme.spacing(4),
+      [theme.breakpoints.up("sm")]: {
+        display: "flex",
+        alignItems: "center",
+      },
+    },
+    authButtons: {
+      [theme.breakpoints.down("xs")]: {
+        marginTop: theme.spacing(2),
+      },
+    },
+  })
+);
 
 function Top() {
+  const classes = useStyles();
+
   return (
     <>
-      <Box m={2}>
-        <Typography component="h1" variant="h3">
+      <Box className={classes.pageTitle}>
+        <Typography component="h1" variant="h4">
           Project MOSQ
         </Typography>
+        <Hidden xsDown>
+          <Spacer />
+        </Hidden>
+        <Box className={classes.authButtons}>
+          <RouterButton
+            variant="contained"
+            color="primary"
+            to="/login"
+            className={classes.authButton}
+          >
+            Sign in
+          </RouterButton>
+          <RouterButton
+            variant="contained"
+            color="secondary"
+            to="/login"
+            className={classes.authButton}
+          >
+            Sign up
+          </RouterButton>
+        </Box>
       </Box>
-      <Box m={4} mt={4}>
+      <Box m={4}>
         <Typography variant="body1">
           こいつは数学・算数のプリントを作るアレです。
         </Typography>

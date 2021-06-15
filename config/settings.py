@@ -138,9 +138,22 @@ except ImportError:
 MEDIA_ROOT = Path(BASE_DIR).joinpath('media')
 
 
-# Setting the pagination style
-# https://www.django-rest-framework.org/api-guide/pagination/
 REST_FRAMEWORK = {
+    # Setting the pagination style
+    # https://www.django-rest-framework.org/api-guide/pagination/
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 100
+    'PAGE_SIZE': 100,
+    # Setting the permission policy
+    # https://www.django-rest-framework.org/api-guide/permissions/
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    # Setting the authentication scheme
+    # https://www.django-rest-framework.org/api-guide/authentication/
+    # https://jpadilla.github.io/django-rest-framework-jwt/
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ]
 }

@@ -10,11 +10,20 @@ import Alert from "@material-ui/lab/Alert";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm, useWatch } from "react-hook-form";
 import { useHistory, useParams } from "react-router-dom";
-import { apiPrints, apiUnits, TGrade, TPrintDetail, TUnit } from "api";
+import {
+  apiPrints,
+  apiUnits,
+  TGrade,
+  TPrintDetail,
+  TPrintHead,
+  TUnit,
+} from "api";
 import { RouterButton, RouterLink } from "components";
 
 interface IFormInput {
   title: string;
+  description: string;
+  password: string;
   details: string[];
   question_count: string;
   action: string;
@@ -45,6 +54,8 @@ function PrintForm() {
   const onSubmit: SubmitHandler<IFormInput> = async (formData) => {
     const params = {
       title: formData.title,
+      description: formData.description,
+      password: formData.password,
       details: formData.details
         .filter((strValue) => strValue)
         .map((strValue, i) => {
@@ -77,27 +88,23 @@ function PrintForm() {
   useEffect(() => {
     let unmounted = false;
     const f = async () => {
-      let _error = false;
       let _unitList: TUnit[] = [];
-      let _title = "";
-      let _details = [];
+      let _fetchData: TPrintHead | undefined = undefined;
       try {
         _unitList = await apiUnits.list();
         if (printId !== "add") {
-          const data = await apiPrints.get(printId);
-          console.log(data);
-          _title = data.title;
-          _details = data.details;
+          _fetchData = await apiPrints.get(printId);
+          console.log(_fetchData);
         }
-      } catch (error) {
-        _error = true;
-      }
+      } catch (error) {}
 
       if (!unmounted) {
         setUnitList(_unitList);
-        setValue("title", _title);
+        setValue("title", _fetchData?.title || "");
+        setValue("description", _fetchData?.description || "");
+        setValue("password", _fetchData?.password || "");
         let question_count = 0;
-        _details.map((detail: TPrintDetail) => {
+        _fetchData?.details.map((detail: TPrintDetail) => {
           _unitList.map((unit: TUnit, i: number) => {
             if (detail.unit === unit.id) {
               setValue(
@@ -111,7 +118,7 @@ function PrintForm() {
           return false;
         });
         setValue("question_count", `${question_count}`);
-        setFetchError(_error);
+        setFetchError(printId !== "add" && _fetchData === undefined);
         setLoading(false);
       }
     };
@@ -133,7 +140,7 @@ function PrintForm() {
       <Grid container spacing={2} alignItems="center">
         <Grid item xs={12}>
           <Typography component="h2" variant="h6">
-            プリントセットの{printId === "add" ? "追加" : "編集"}
+            プリント定義の{printId === "add" ? "追加" : "編集"}
           </Typography>
         </Grid>
         {!loading &&
@@ -151,14 +158,76 @@ function PrintForm() {
                   size="small"
                   inputProps={{
                     ...register("title", {
-                      required: true,
+                      required: "入力必須です。",
+                      maxLength: {
+                        value: 100,
+                        message: "100文字以内で入力してください。",
+                      },
                     }),
+                  }}
+                  InputLabelProps={{
+                    shrink: true,
                   }}
                   label="プリントのタイトル"
                   error={!!errors.title}
+                  helperText={
+                    errors.title?.message ||
+                    "プリントのヘッダーに印字するテキストを入力してください。"
+                  }
                   fullWidth
                   autoFocus
                   required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  size="small"
+                  inputProps={{
+                    ...register("description", {
+                      maxLength: {
+                        value: 100,
+                        message: "100文字以内で入力してください。",
+                      },
+                    }),
+                  }}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  label="説明"
+                  error={!!errors.description}
+                  helperText={
+                    errors.description?.message ||
+                    "説明があれば入力してください。(プリントには印字されません)"
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  size="small"
+                  type="password"
+                  inputProps={{
+                    ...register("password", {
+                      maxLength: {
+                        value: 32,
+                        message: "4〜32文字で入力してください。",
+                      },
+                      minLength: {
+                        value: 4,
+                        message: "4〜32文字で入力してください。",
+                      },
+                    }),
+                  }}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  label="パスワード"
+                  error={!!errors.password}
+                  helperText={
+                    errors.password?.message ||
+                    "設定すると更新・削除でパスワードを要求します。(4〜32文字)"
+                  }
+                  fullWidth
                 />
               </Grid>
               {unitList.map((unit: TUnit, i: number) => {
@@ -196,13 +265,6 @@ function PrintForm() {
               {errors.question_count && (
                 <Grid item xs={12}>
                   <Alert severity="error">問題数を設定してください。</Alert>
-                </Grid>
-              )}
-              {errors.title && (
-                <Grid item xs={12}>
-                  <Alert severity="error">
-                    プリントのタイトルを入力してください。
-                  </Alert>
                 </Grid>
               )}
               <Grid item xs={12} sm={4}>

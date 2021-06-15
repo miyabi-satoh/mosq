@@ -54,7 +54,7 @@ function Index() {
     <Grid container spacing={2} alignItems="center">
       <Grid item xs={12} sm>
         <Typography component="h2" variant="h6">
-          プリントセットの一覧
+          プリント定義の一覧
         </Typography>
       </Grid>
       <Grid item xs={12} sm={5} md={3}>
@@ -64,7 +64,7 @@ function Index() {
           color="primary"
           to={`${thisUrl}/add`}
         >
-          プリントセットを追加
+          プリント定義を追加
         </RouterButton>
       </Grid>
       <Grid item container>
@@ -88,7 +88,7 @@ function Index() {
               );
 
               return (
-                <Grid item xs={12} sm={6} key={`printhead-${printhead.id}`}>
+                <Grid item xs={12} md={6} key={`printhead-${printhead.id}`}>
                   <Card variant="outlined">
                     <CardContent>
                       <Typography component="h3" variant="h5">

@@ -15,28 +15,32 @@ class GradeSerializer(serializers.ModelSerializer):
 
 
 class UnitSerializer(serializers.ModelSerializer):
-    # question_count = serializers.IntegerField(read_only=True)
     question_count = serializers.SerializerMethodField()
     grade = GradeSerializer()
 
     class Meta:
         model = Unit
         fields = '__all__'
-        # fields = ['id', 'unit_code', 'unit_text',
-        #           'grade', 'question_count']
 
     def get_question_count(self, obj):
         return Question.objects.filter(unit=obj.id).count()
 
 
+class ArchiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Archive
+        fields = '__all__'
+
+
 class PrintDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrintDetail
-        fields = ['id', 'unit', 'quantity']
+        fields = '__all__'
 
 
 class PrintSerializer(serializers.ModelSerializer):
     details = PrintDetailSerializer(many=True)
+    archives = ArchiveSerializer(many=True)
 
     class Meta:
         model = PrintHead
@@ -58,9 +62,3 @@ class PrintSerializer(serializers.ModelSerializer):
         instance.title = validated_data.get('title', instance.title)
         instance.save()
         return instance
-
-
-class ArchiveSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Archive
-        fields = '__all__'

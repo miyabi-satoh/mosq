@@ -4,6 +4,16 @@ from django.contrib import admin
 
 
 class Grade(models.Model):
+    """
+    学年マスタ
+
+    Attributes
+    ----------
+    grade_code : str
+        学年コード2桁。
+    grade_text : str
+        学年の名称。
+    """
     grade_code = models.CharField('学年コード', max_length=2, unique=True)
     grade_text = models.CharField('学年', max_length=10, unique=True)
 
@@ -17,6 +27,18 @@ class Grade(models.Model):
 
 
 class Unit(models.Model):
+    """
+    単元マスタ
+
+    Attributes
+    ----------
+    grade : int
+        Gradeへの外部キー。
+    unit_code : str
+        単元コード4桁。
+    unit_text : str
+        単元の名称。
+    """
     grade = models.ForeignKey(
         Grade, on_delete=models.CASCADE, verbose_name='学年')
     unit_code = models.CharField('単元コード', max_length=4)
@@ -38,6 +60,22 @@ class Unit(models.Model):
 
 
 class Question(models.Model):
+    """
+    設問マスタ
+
+    Attributes
+    ----------
+    unit : int
+        Unitへの外部キー
+    question_text : str
+        問題のテキスト。
+    answer_text : str
+        答えのテキスト。
+    source_text : str
+        出典元。
+    url_text : str
+        参照先URL(任意)。
+    """
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE, verbose_name='単元')
     question_text = models.CharField('問題', max_length=100, unique=True)
     answer_text = models.CharField('解答', max_length=100)
@@ -53,8 +91,47 @@ class Question(models.Model):
         verbose_name_plural = '設問マスタ'
 
 
+class PrintType(models.Model):
+    """
+    プリント形式
+
+    Attibutes
+    ---------
+    type_text : str
+        形式の名称。
+    template_path : str
+        テンプレートファイルへのパス
+    cover_path : str
+        表紙へのパス(任意)。
+    """
+    type_text = models.CharField('形式', max_length=100)
+    template_path = models.CharField('テンプレートのパス', max_length=100)
+    cover_path = models.CharField('表紙のパス', null=True, max_length=100)
+
+    def __str__(self) -> str:
+        return self.type_text
+
+    class Meta:
+        verbose_name = 'プリント形式'
+        verbose_name_plural = 'プリント形式'
+
+
 class PrintHead(models.Model):
+    """
+    プリントヘッダ
+
+    Attributes
+    ----------
+    title : str
+        ヘッダータイトル。
+    description : str
+        プリントの説明(任意)。
+    password : str
+        保護パスワード(任意)。最大32桁。
+    """
     title = models.CharField('タイトル', max_length=100)
+    description = models.CharField('説明', null=True, max_length=100)
+    password = models.CharField('パスワード', null=True, max_length=32)
 
     @admin.display(description='問題数')
     def total_questions(self):
@@ -72,6 +149,18 @@ class PrintHead(models.Model):
 
 
 class PrintDetail(models.Model):
+    """
+    プリント明細
+
+    Attributes
+    ----------
+    printhead : int
+        PrintHeadへの外部キー。
+    unit : int
+        Unitへの外部キー。
+    quantity : int
+        問題数。
+    """
     printhead = models.ForeignKey(
         PrintHead, related_name='details', on_delete=models.CASCADE, verbose_name='プリントヘッダ')
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE, verbose_name='単元')
@@ -93,6 +182,22 @@ class PrintDetail(models.Model):
 
 
 class Archive(models.Model):
+    """
+    アーカイブ(作成済みプリントのストック)
+
+    Attributes
+    ----------
+    printhead : int
+        PrintHeadへの外部キー。
+    file : str
+        ファイルパス。
+    title : str
+        タイトル。
+    created_at : datetime
+        作成日時。
+    """
+    printhead = models.ForeignKey(
+        PrintHead, related_name='archives', null=True, on_delete=models.SET_NULL, verbose_name='プリントヘッダ')
     file = models.FileField('ファイル', upload_to='archive')
     title = models.CharField('タイトル', max_length=100)
     created_at = models.DateTimeField('作成日時', default=timezone.now)

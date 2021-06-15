@@ -48,6 +48,7 @@ def print_out(request, printhead_id):
         return None
 
     archive = Archive()
+    archive.printhead = printhead
     archive.file = file
     archive.title = printhead.title
     archive.save()

@@ -21,11 +21,15 @@ export type TPrintDetail = TModelBase & {
 
 export type TPrintHead = TModelBase & {
   title: string;
+  description: string;
+  password: string;
   details: TPrintDetail[];
+  archives: TArchive[];
 };
 
 export type TArchive = TModelBase & {
   file: string;
   title: string;
   created_at: Date;
+  printhead: number;
 };
