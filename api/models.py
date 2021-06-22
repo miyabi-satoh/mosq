@@ -40,7 +40,10 @@ class Unit(models.Model):
         単元の名称。
     """
     grade = models.ForeignKey(
-        Grade, on_delete=models.CASCADE, verbose_name='学年')
+        Grade,
+        on_delete=models.PROTECT,
+        verbose_name='学年'
+    )
     unit_code = models.CharField('単元コード', max_length=4)
     unit_text = models.CharField('単元', max_length=100)
 
@@ -76,11 +79,11 @@ class Question(models.Model):
     url_text : str
         参照先URL(任意)。
     """
-    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, verbose_name='単元')
+    unit = models.ForeignKey(Unit, on_delete=models.PROTECT, verbose_name='単元')
     question_text = models.CharField('問題', max_length=100, unique=True)
     answer_text = models.CharField('解答', max_length=100)
     source_text = models.CharField('出典', max_length=100)
-    url_text = models.CharField('URL', max_length=200, null=True)
+    url_text = models.CharField('URL', max_length=200, null=True, blank=True)
 
     def __str__(self) -> str:
         return self.question_text
@@ -99,14 +102,14 @@ class PrintType(models.Model):
     ---------
     type_text : str
         形式の名称。
-    template_path : str
-        テンプレートファイルへのパス
-    cover_path : str
-        表紙へのパス(任意)。
+    template : str
+        テンプレートファイル
+    cover : str
+        表紙。
     """
     type_text = models.CharField('形式', max_length=100)
-    template_path = models.CharField('テンプレートのパス', max_length=100)
-    cover_path = models.CharField('表紙のパス', null=True, max_length=100)
+    template = models.FileField('テンプレート', upload_to='template')
+    cover = models.FileField('表紙', upload_to='cover', null=True, blank=True)
 
     def __str__(self) -> str:
         return self.type_text
@@ -129,9 +132,14 @@ class PrintHead(models.Model):
     password : str
         保護パスワード(任意)。最大32桁。
     """
-    title = models.CharField('タイトル', max_length=100)
-    description = models.CharField('説明', null=True, max_length=100)
-    password = models.CharField('パスワード', null=True, max_length=32)
+    title = models.CharField('タイトル', max_length=100,)
+    description = models.CharField('説明', null=True, blank=True, max_length=100)
+    password = models.CharField('パスワード', null=True, blank=True, max_length=32)
+    printtype = models.ForeignKey(
+        PrintType,
+        on_delete=models.PROTECT,
+        verbose_name='形式'
+    )
 
     @admin.display(description='問題数')
     def total_questions(self):
@@ -162,7 +170,11 @@ class PrintDetail(models.Model):
         問題数。
     """
     printhead = models.ForeignKey(
-        PrintHead, related_name='details', on_delete=models.CASCADE, verbose_name='プリントヘッダ')
+        PrintHead,
+        related_name='details',
+        on_delete=models.CASCADE,
+        verbose_name='プリントヘッダ'
+    )
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE, verbose_name='単元')
     quantity = models.PositiveSmallIntegerField(verbose_name='問題数')
 
@@ -197,7 +209,13 @@ class Archive(models.Model):
         作成日時。
     """
     printhead = models.ForeignKey(
-        PrintHead, related_name='archives', null=True, on_delete=models.SET_NULL, verbose_name='プリントヘッダ')
+        PrintHead,
+        related_name='archives',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name='プリントヘッダ'
+    )
     file = models.FileField('ファイル', upload_to='archive')
     title = models.CharField('タイトル', max_length=100)
     created_at = models.DateTimeField('作成日時', default=timezone.now)

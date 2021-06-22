@@ -152,7 +152,7 @@ REST_FRAMEWORK = {
     # https://www.django-rest-framework.org/api-guide/authentication/
     # https://jpadilla.github.io/django-rest-framework-jwt/
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        # 'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ]

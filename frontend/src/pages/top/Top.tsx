@@ -1,12 +1,11 @@
 import {
   Box,
   createStyles,
-  Hidden,
   makeStyles,
   Theme,
   Typography,
 } from "@material-ui/core";
-import { RouterButton, RouterLink, Spacer } from "components";
+import { RouterLink } from "components";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -42,27 +41,6 @@ function Top() {
         <Typography component="h1" variant="h4">
           Project MOSQ
         </Typography>
-        <Hidden xsDown>
-          <Spacer />
-        </Hidden>
-        <Box className={classes.authButtons}>
-          <RouterButton
-            variant="contained"
-            color="primary"
-            to="/login"
-            className={classes.authButton}
-          >
-            Sign in
-          </RouterButton>
-          <RouterButton
-            variant="contained"
-            color="secondary"
-            to="/login"
-            className={classes.authButton}
-          >
-            Sign up
-          </RouterButton>
-        </Box>
       </Box>
       <Box m={4}>
         <Typography variant="body1">
@@ -71,9 +49,8 @@ function Top() {
       </Box>
       <Box m={4}>
         <Typography variant="body1">
-          <RouterLink to="/prints">新規作成</RouterLink>では
-          プリント内容を新たに定義したり、
-          作成済みのプリント定義から新しいプリントを印刷したりできます。
+          <RouterLink to="/prints">プリント作成</RouterLink>では
+          新しいプリントを作成できます。
           <br />
           今の所は、計算コンテスト用のプリントしか作れません。
           <br />
@@ -82,8 +59,8 @@ function Top() {
       </Box>
       <Box m={4}>
         <Typography variant="body1">
-          <RouterLink to="/archives">再印刷</RouterLink>では
-          過去に作成したプリントを再印刷できます。
+          <RouterLink to="/archives">アーカイブ</RouterLink>では
+          過去に作成したプリントを再利用できます。
           <br />
           プリントが溜まってきたときに、どうしたら探しやすくなるかなぁ。
           <br />

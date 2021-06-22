@@ -1,42 +1,55 @@
 import {
   Box,
   Button,
+  FormControl,
+  FormHelperText,
   Grid,
   InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField,
   Typography,
 } from "@material-ui/core";
-import Alert from "@material-ui/lab/Alert";
 import { useEffect, useState } from "react";
-import { SubmitHandler, useForm, useWatch } from "react-hook-form";
+import { Controller, SubmitHandler, useForm, useWatch } from "react-hook-form";
 import { useHistory, useParams } from "react-router-dom";
 import {
+  apiMaster,
   apiPrints,
-  apiUnits,
   TGrade,
   TPrintDetail,
   TPrintHead,
+  TPrintType,
   TUnit,
 } from "api";
 import { RouterButton, RouterLink } from "components";
+import { useAuth } from "contexts/Auth";
 
 interface IFormInput {
   title: string;
   description: string;
   password: string;
+  printtype: string;
   details: string[];
   question_count: string;
   action: string;
 }
+type TFormError = {
+  [P in keyof IFormInput]?: string[];
+};
 
 const backUrl = `/prints`;
 
 function PrintForm() {
+  const { currentUser } = useAuth();
   const history = useHistory();
   const { printId } = useParams<{ printId: string }>();
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
+  const [postErrors, setPostErrors] = useState<TFormError>({});
   const [unitList, setUnitList] = useState<TUnit[]>([]);
+  const [printTypeList, setPrintTypeList] = useState<TPrintType[]>([]);
   const {
     register,
     control,
@@ -56,6 +69,7 @@ function PrintForm() {
       title: formData.title,
       description: formData.description,
       password: formData.password,
+      printtype: formData.printtype,
       details: formData.details
         .filter((strValue) => strValue)
         .map((strValue, i) => {
@@ -73,7 +87,11 @@ function PrintForm() {
           : await apiPrints.update(printId, params);
       console.log(data);
       history.push(backUrl);
-    } catch (error) {}
+    } catch (error) {
+      if (error.response?.status === 400) {
+        setPostErrors(error.response.data);
+      }
+    }
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,9 +107,11 @@ function PrintForm() {
     let unmounted = false;
     const f = async () => {
       let _unitList: TUnit[] = [];
+      let _printTypeList: TPrintType[] = [];
       let _fetchData: TPrintHead | undefined = undefined;
       try {
-        _unitList = await apiUnits.list();
+        _unitList = await apiMaster.units();
+        _printTypeList = await apiMaster.printtypes();
         if (printId !== "add") {
           _fetchData = await apiPrints.get(printId);
           console.log(_fetchData);
@@ -100,9 +120,11 @@ function PrintForm() {
 
       if (!unmounted) {
         setUnitList(_unitList);
+        setPrintTypeList(_printTypeList);
         setValue("title", _fetchData?.title || "");
         setValue("description", _fetchData?.description || "");
         setValue("password", _fetchData?.password || "");
+        setValue("printtype", `${_fetchData?.printtype || ""}`);
         let question_count = 0;
         _fetchData?.details.map((detail: TPrintDetail) => {
           _unitList.map((unit: TUnit, i: number) => {
@@ -130,11 +152,13 @@ function PrintForm() {
     return cleanup;
   }, [setValue, printId]);
 
+  console.log(errors);
+
   return (
     <form noValidate onSubmit={handleSubmit(onSubmit)}>
       <input
         style={{ display: "none" }}
-        {...register("question_count", { required: true, min: 1 })}
+        {...register("question_count")}
         type="number"
       />
       <Grid container spacing={2} alignItems="center">
@@ -157,16 +181,7 @@ function PrintForm() {
                 <TextField
                   size="small"
                   inputProps={{
-                    ...register("title", {
-                      required: "入力必須です。",
-                      maxLength: {
-                        value: 100,
-                        message: "100文字以内で入力してください。",
-                      },
-                    }),
-                  }}
-                  InputLabelProps={{
-                    shrink: true,
+                    ...register("title"),
                   }}
                   label="プリントのタイトル"
                   error={!!errors.title}
@@ -175,23 +190,60 @@ function PrintForm() {
                     "プリントのヘッダーに印字するテキストを入力してください。"
                   }
                   fullWidth
-                  autoFocus
-                  required
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl variant="outlined" size="small" fullWidth>
+                  <InputLabel id="printtype-label">プリントの形式</InputLabel>
+                  <Controller
+                    render={({ field }) => (
+                      <Select
+                        {...field}
+                        labelId="printtype-label"
+                        label="プリントの形式"
+                      >
+                        {printTypeList.map((printType) => {
+                          return (
+                            <MenuItem
+                              key={`printtype-${printType.id}`}
+                              value={printType.id}
+                            >
+                              {printType.type_text}
+                            </MenuItem>
+                          );
+                        })}
+                      </Select>
+                    )}
+                    control={control}
+                    name="printtype"
+                    defaultValue=""
+                  />
+                  <FormHelperText>
+                    プリントの形式(フォーマット)を選択してください。
+                  </FormHelperText>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  size="small"
+                  type="password"
+                  inputProps={{
+                    ...register("password"),
+                  }}
+                  label="パスワード"
+                  error={!!errors.password}
+                  helperText={
+                    errors.password?.message ||
+                    "設定すると更新・削除でパスワードを要求します。(4〜32文字)"
+                  }
+                  fullWidth
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   size="small"
                   inputProps={{
-                    ...register("description", {
-                      maxLength: {
-                        value: 100,
-                        message: "100文字以内で入力してください。",
-                      },
-                    }),
-                  }}
-                  InputLabelProps={{
-                    shrink: true,
+                    ...register("description"),
                   }}
                   label="説明"
                   error={!!errors.description}
@@ -203,32 +255,7 @@ function PrintForm() {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  size="small"
-                  type="password"
-                  inputProps={{
-                    ...register("password", {
-                      maxLength: {
-                        value: 32,
-                        message: "4〜32文字で入力してください。",
-                      },
-                      minLength: {
-                        value: 4,
-                        message: "4〜32文字で入力してください。",
-                      },
-                    }),
-                  }}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  label="パスワード"
-                  error={!!errors.password}
-                  helperText={
-                    errors.password?.message ||
-                    "設定すると更新・削除でパスワードを要求します。(4〜32文字)"
-                  }
-                  fullWidth
-                />
+                <Typography variant="subtitle2">単元ごとの問題数</Typography>
               </Grid>
               {unitList.map((unit: TUnit, i: number) => {
                 const grade = unit.grade as TGrade;
@@ -246,10 +273,7 @@ function PrintForm() {
                           ),
                         }}
                         inputProps={{
-                          ...register(`details.${i}` as keyof IFormInput, {
-                            min: 0,
-                            max: unit.question_count,
-                          }),
+                          ...register(`details.${i}` as keyof IFormInput),
                           min: 0,
                           max: unit.question_count,
                           style: { textAlign: "right" },
@@ -262,11 +286,6 @@ function PrintForm() {
                   </Grid>
                 );
               })}
-              {errors.question_count && (
-                <Grid item xs={12}>
-                  <Alert severity="error">問題数を設定してください。</Alert>
-                </Grid>
-              )}
               <Grid item xs={12} sm={4}>
                 <Box textAlign="center">全 {questionCount} 問</Box>
               </Grid>

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Archive, Grade, PrintDetail, PrintHead, Unit, Question
+from .models import Archive, Grade, PrintDetail, PrintHead, PrintType, Unit, Question
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -32,7 +32,15 @@ class ArchiveSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class PrintTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrintType
+        fields = ['id', 'type_text']
+
+
 class PrintDetailSerializer(serializers.ModelSerializer):
+    unit = UnitSerializer()
+
     class Meta:
         model = PrintDetail
         fields = '__all__'
@@ -40,7 +48,8 @@ class PrintDetailSerializer(serializers.ModelSerializer):
 
 class PrintSerializer(serializers.ModelSerializer):
     details = PrintDetailSerializer(many=True)
-    archives = ArchiveSerializer(many=True)
+    # archives = ArchiveSerializer(many=True, read_only=True)
+    printtype = PrintTypeSerializer()
 
     class Meta:
         model = PrintHead
@@ -48,6 +57,9 @@ class PrintSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         details_data = validated_data.pop('details')
+        if not details_data:
+            raise serializers.ValidationError('単元と問題数を入力してください。')
+
         printhead = PrintHead.objects.create(**validated_data)
         for detail_data in details_data:
             PrintDetail.objects.create(printhead=printhead, **detail_data)

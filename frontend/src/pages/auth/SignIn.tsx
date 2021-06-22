@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -11,10 +12,9 @@ import {
   Typography,
 } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
-import { apiAuth } from "api";
-import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useHistory } from "react-router-dom";
+import { useAuth } from "contexts/Auth";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -33,6 +33,7 @@ export default function SignIn() {
   const classes = useStyles();
   const history = useHistory();
   const [message, setMessage] = useState("");
+  const { login, currentUser } = useAuth();
   const {
     register,
     handleSubmit,
@@ -41,27 +42,32 @@ export default function SignIn() {
 
   const onSubmit: SubmitHandler<IFormInput> = async (formData) => {
     try {
-      await apiAuth.login(formData.username, formData.password);
-      history.push(`/`);
-    } catch (error) {
-      setMessage(error.response?.data?.non_field_errors?.join(""));
-    }
+      login(formData.username, formData.password);
+    } catch (error) {}
   };
+
+  useEffect(() => {
+    if (currentUser) {
+      history.push("/");
+    } else if (currentUser === null) {
+      setMessage("認証情報が一致しませんでした。");
+    }
+  }, [currentUser, history]);
 
   return (
     <Container maxWidth="xs">
-      <Box mt={4} mb={2} textAlign="center">
+      <Box my={4} textAlign="center">
         <Typography component="h1" variant="h5">
           Sign in to MOSQ
         </Typography>
       </Box>
-      {message && (
-        <Box mb={4}>
-          <Alert severity="error">{message}</Alert>
-        </Box>
-      )}
       <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <Grid container component={Paper} spacing={2} className={classes.paper}>
+          {message && (
+            <Grid item xs={12}>
+              <Alert severity="error">{message}</Alert>
+            </Grid>
+          )}
           <Grid item xs={12}>
             <TextField
               size="small"

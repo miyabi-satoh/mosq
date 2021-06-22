@@ -9,26 +9,19 @@ import {
   CardActions,
   CardContent,
 } from "@material-ui/core";
-import { RouterButton, RouterLink, Spacer } from "components";
+import { Alert } from "@material-ui/lab";
+import { RouterButton, RouterLink } from "components";
 import PrintForm from "./PrintForm";
 import { apiPrints, TPrintHead } from "api";
-import { Alert } from "@material-ui/lab";
+import { useAuth } from "contexts/Auth";
+import PrintDetail from "./PrintDetail";
 
 const thisUrl = "/prints";
 
 function Index() {
+  const { currentUser } = useAuth();
   const [printList, setPrintList] =
     useState<TPrintHead[] | undefined>(undefined);
-
-  const handleRemove = async (id: string) => {
-    try {
-      await apiPrints.delete(id);
-      const data = await apiPrints.list();
-      console.log(data);
-
-      setPrintList(data.results);
-    } catch (error) {}
-  };
 
   useEffect(() => {
     let unmounted = false;
@@ -54,27 +47,28 @@ function Index() {
     <Grid container spacing={2} alignItems="center">
       <Grid item xs={12} sm>
         <Typography component="h2" variant="h6">
-          プリント定義の一覧
+          プリント作成
         </Typography>
       </Grid>
-      <Grid item xs={12} sm={5} md={3}>
-        <RouterButton
-          fullWidth
-          variant="contained"
-          color="primary"
-          to={`${thisUrl}/add`}
-        >
-          プリント定義を追加
-        </RouterButton>
-      </Grid>
+      {currentUser && (
+        <Grid item xs={12} sm={5} md={3}>
+          <RouterButton
+            fullWidth
+            variant="contained"
+            color="primary"
+            to={`${thisUrl}/add`}
+          >
+            プリント定義を追加
+          </RouterButton>
+        </Grid>
+      )}
       <Grid item container>
         {printList?.length ? (
           <>
             <Grid item xs={12}>
               <Box mb={2}>
                 <Alert severity="warning">
-                  このページから印刷すると、問題はランダムに抽出されます。
-                  また、生成されたプリントはアーカイブされます。
+                  問題はプリントを作成するたびランダムに抽出されます。
                 </Alert>
               </Box>
             </Grid>
@@ -91,7 +85,7 @@ function Index() {
                 <Grid item xs={12} md={6} key={`printhead-${printhead.id}`}>
                   <Card variant="outlined">
                     <CardContent>
-                      <Typography component="h3" variant="h5">
+                      <Typography component="h3" variant="h6">
                         <RouterLink to={`${thisUrl}/${printhead.id}`}>
                           {printhead.title}
                         </RouterLink>
@@ -110,15 +104,18 @@ function Index() {
                           )
                         }
                       >
-                        印刷
+                        作成のみ
                       </Button>
-                      <Spacer />
                       <Button
                         color="secondary"
                         variant="outlined"
-                        onClick={() => handleRemove(`${printhead.id}`)}
+                        onClick={() =>
+                          window.open(
+                            `http://localhost:8000/printout/${printhead.id}/?archive`
+                          )
+                        }
                       >
-                        削除
+                        作成してアーカイブ
                       </Button>
                     </CardActions>
                   </Card>
@@ -129,7 +126,7 @@ function Index() {
         ) : (
           <Grid item xs={12}>
             <Box textAlign="center" py={4}>
-              プリントセットは未登録です。
+              プリント定義が未登録です。
             </Box>
           </Grid>
         )}
@@ -142,7 +139,8 @@ function Prints() {
   return (
     <Box mx={2}>
       <Switch>
-        <Route exact path={`${thisUrl}/:printId`} component={PrintForm} />
+        <Route exact path={`${thisUrl}/:printId/edit`} component={PrintForm} />
+        <Route exact path={`${thisUrl}/:printId`} component={PrintDetail} />
         <Route component={Index} />
       </Switch>
     </Box>

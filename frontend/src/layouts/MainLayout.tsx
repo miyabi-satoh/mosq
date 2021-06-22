@@ -1,23 +1,21 @@
+import React from "react";
 import {
   AppBar,
   Box,
-  Fab,
-  Grid,
-  Slide,
-  Toolbar,
-  Zoom,
-} from "@material-ui/core";
-import { useScrollTrigger } from "@material-ui/core";
-import {
-  createStyles,
-  makeStyles,
-  Theme,
   Container,
   ContainerProps,
+  createStyles,
+  Fab,
+  makeStyles,
+  Slide,
+  Theme,
+  Toolbar,
+  useScrollTrigger,
+  Zoom,
 } from "@material-ui/core";
 import { KeyboardArrowUp } from "@material-ui/icons";
-import { RouterButton } from "components";
-import React from "react";
+import { RouterButton, RouterLink, Spacer } from "components";
+import { useAuth } from "contexts/Auth";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -68,36 +66,40 @@ function HideOnScroll(props: React.PropsWithChildren<{}>) {
 
 export function MainLayout({ children, ...props }: ContainerProps) {
   const classes = useStyles();
+  const { currentUser } = useAuth();
 
   return (
     <div className={classes.root}>
-      <Container {...props} component="main" className={classes.main} fixed>
+      <Container {...props} className={classes.main} fixed>
         <HideOnScroll>
           <AppBar>
             <Toolbar disableGutters>
-              <Grid container>
-                <Grid item xs={4}>
-                  <RouterButton fullWidth color="inherit" to="/">
-                    Home
-                  </RouterButton>
-                </Grid>
-                <Grid item xs={4}>
-                  <RouterButton fullWidth color="inherit" to="/prints">
-                    プリント定義
-                  </RouterButton>
-                </Grid>
-                <Grid item xs={4}>
-                  <RouterButton fullWidth color="inherit" to="/archives">
-                    アーカイブ
-                  </RouterButton>
-                </Grid>
-              </Grid>
+              <Spacer />
+              <RouterButton color="inherit" to="/">
+                Home
+              </RouterButton>
+              <Spacer />
+              <RouterButton color="inherit" to="/prints">
+                プリント作成
+              </RouterButton>
+              <Spacer />
+              <RouterButton color="inherit" to="/archives">
+                アーカイブ
+              </RouterButton>
+              <Spacer />
             </Toolbar>
           </AppBar>
         </HideOnScroll>
         <Toolbar />
-        <Box mt={2} mb={10}>
+        <Box mt={2} mb={4} component="main">
           {children}
+        </Box>
+        <Box p={2}>
+          {currentUser ? (
+            `${currentUser.username} is logged in.`
+          ) : (
+            <RouterLink to="/login">ログイン</RouterLink>
+          )}
         </Box>
       </Container>
     </div>

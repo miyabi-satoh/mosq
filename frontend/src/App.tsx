@@ -1,3 +1,4 @@
+import { AuthProvider } from "contexts/Auth";
 import { MainLayout } from "layouts";
 import { BrowserRouter } from "react-router-dom";
 import Router from "./Router";
@@ -5,9 +6,11 @@ import Router from "./Router";
 function App() {
   return (
     <BrowserRouter>
-      <MainLayout>
-        <Router />
-      </MainLayout>
+      <AuthProvider>
+        <MainLayout>
+          <Router />
+        </MainLayout>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
