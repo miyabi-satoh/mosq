@@ -2,6 +2,7 @@ import { apiAuth, TUser } from "api";
 import React, { useEffect, useState } from "react";
 import { useContext } from "react";
 import { createContext } from "react";
+import { useLocation } from "react-router-dom";
 
 interface IAuthContext {
   currentUser: TUser | null | undefined;
@@ -20,6 +21,7 @@ function useAuth() {
 }
 
 function AuthProvider(props: React.PropsWithChildren<{}>) {
+  const location = useLocation();
   const [currentUser, setCurrentUser] =
     useState<TUser | null | undefined>(undefined);
 
@@ -47,6 +49,7 @@ function AuthProvider(props: React.PropsWithChildren<{}>) {
         user = undefined;
       } finally {
         if (!unmounted) {
+          console.log(user);
           setCurrentUser(user);
         }
       }
@@ -56,7 +59,7 @@ function AuthProvider(props: React.PropsWithChildren<{}>) {
     return () => {
       unmounted = true;
     };
-  }, []);
+  }, [location]);
 
   return (
     <AuthContext.Provider

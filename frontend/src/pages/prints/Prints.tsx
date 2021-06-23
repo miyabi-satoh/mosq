@@ -86,7 +86,11 @@ function Index() {
                   <Card variant="outlined">
                     <CardContent>
                       <Typography component="h3" variant="h6">
-                        <RouterLink to={`${thisUrl}/${printhead.id}`}>
+                        <RouterLink
+                          to={`${thisUrl}/${printhead.id}${
+                            currentUser ? "/edit" : ""
+                          }`}
+                        >
                           {printhead.title}
                         </RouterLink>
                       </Typography>
