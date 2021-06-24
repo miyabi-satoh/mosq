@@ -1,7 +1,7 @@
 import { Box, Divider, Typography } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import { apiPrints, TPrintHead } from "api";
-import { RouterLink } from "components";
+import { Indicator, RouterLink } from "components";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -31,7 +31,7 @@ export default function PrintDetail() {
   }, [printId]);
 
   if (data === undefined) {
-    return null;
+    return <Indicator />;
   }
 
   if (data === null) {

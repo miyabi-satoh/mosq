@@ -10,7 +10,7 @@ import {
   CardContent,
 } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
-import { RouterButton, RouterLink } from "components";
+import { Indicator, RouterButton, RouterLink } from "components";
 import PrintForm from "./PrintForm";
 import { apiPrints, TPrintHead } from "api";
 import { useAuth } from "contexts/Auth";
@@ -43,6 +43,10 @@ function Index() {
     return cleanup;
   }, []);
 
+  if (printList === undefined) {
+    return <Indicator />;
+  }
+
   return (
     <Grid container spacing={2} alignItems="center">
       <Grid item xs={12} sm>
@@ -63,7 +67,13 @@ function Index() {
         </Grid>
       )}
       <Grid item container>
-        {printList?.length ? (
+        {printList.length === 0 ? (
+          <Grid item xs={12}>
+            <Box textAlign="center" py={4}>
+              プリント定義が未登録です。
+            </Box>
+          </Grid>
+        ) : (
           <>
             <Grid item xs={12}>
               <Box mb={2}>
@@ -127,12 +137,6 @@ function Index() {
               );
             })}
           </>
-        ) : (
-          <Grid item xs={12}>
-            <Box textAlign="center" py={4}>
-              プリント定義が未登録です。
-            </Box>
-          </Grid>
         )}
       </Grid>
     </Grid>

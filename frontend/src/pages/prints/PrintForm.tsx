@@ -23,7 +23,7 @@ import {
   TPrintType,
   TUnit,
 } from "api";
-import { RouterButton, RouterLink } from "components";
+import { Indicator, RouterButton, RouterLink } from "components";
 import { useAuth } from "contexts/Auth";
 import { Alert } from "@material-ui/lab";
 
@@ -154,7 +154,7 @@ function PrintForm() {
   }
 
   if (fetchError === undefined) {
-    return null;
+    return <Indicator />;
   }
 
   if (fetchError) {
