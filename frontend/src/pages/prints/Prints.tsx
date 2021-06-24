@@ -143,6 +143,7 @@ function Prints() {
   return (
     <Box mx={2}>
       <Switch>
+        <Route exact path={`${thisUrl}/add`} component={PrintForm} />
         <Route exact path={`${thisUrl}/:printId/edit`} component={PrintForm} />
         <Route exact path={`${thisUrl}/:printId`} component={PrintDetail} />
         <Route component={Index} />
