@@ -13,6 +13,7 @@ urlpatterns = [
     path('hello/', views.HelloView.as_view()),
     path('csrf-cookie/', views.csrf_cookie),
     path('login/', views.login_view),
+    path('logout/', views.logout_view),
     path('users/me/', views.me)
 ]
 

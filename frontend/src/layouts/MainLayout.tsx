@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   AppBar,
   Box,
@@ -6,14 +6,17 @@ import {
   ContainerProps,
   createStyles,
   Fab,
+  IconButton,
   makeStyles,
+  Menu,
+  MenuItem,
   Slide,
   Theme,
   Toolbar,
   useScrollTrigger,
   Zoom,
 } from "@material-ui/core";
-import { KeyboardArrowUp } from "@material-ui/icons";
+import { AccountCircle, KeyboardArrowUp, Person } from "@material-ui/icons";
 import { RouterButton, RouterLink, Spacer } from "components";
 import { useAuth } from "contexts/Auth";
 
@@ -64,9 +67,63 @@ function HideOnScroll(props: React.PropsWithChildren<{}>) {
   );
 }
 
+function AccountMenu() {
+  const { currentUser, logout } = useAuth();
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    handleClose();
+    logout();
+  };
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  return (
+    <>
+      <IconButton
+        color="inherit"
+        aria-controls="account-menu"
+        aria-haspopup="true"
+        onClick={handleClick}
+      >
+        {currentUser ? <AccountCircle /> : <Person />}
+      </IconButton>
+      <Menu
+        id="account-menu"
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+        getContentAnchorEl={null}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+      >
+        {currentUser ? (
+          [
+            <MenuItem key="1" disabled divider>
+              {currentUser.username}
+            </MenuItem>,
+            <MenuItem key="3" onClick={handleLogout}>
+              ログアウト
+            </MenuItem>,
+          ]
+        ) : (
+          <MenuItem onClick={handleClose}>
+            <RouterLink to="/login">ログイン</RouterLink>
+          </MenuItem>
+        )}
+      </Menu>
+    </>
+  );
+}
+
 export function MainLayout({ children, ...props }: ContainerProps) {
   const classes = useStyles();
-  const { currentUser } = useAuth();
 
   return (
     <div className={classes.root}>
@@ -87,19 +144,15 @@ export function MainLayout({ children, ...props }: ContainerProps) {
                 アーカイブ
               </RouterButton>
               <Spacer />
+              <Box mx={4}>
+                <AccountMenu />
+              </Box>
             </Toolbar>
           </AppBar>
         </HideOnScroll>
         <Toolbar />
         <Box mt={2} mb={4} component="main">
           {children}
-        </Box>
-        <Box p={2}>
-          {currentUser ? (
-            `${currentUser.username} is logged in.`
-          ) : (
-            <RouterLink to="/login">ログイン</RouterLink>
-          )}
         </Box>
       </Container>
     </div>

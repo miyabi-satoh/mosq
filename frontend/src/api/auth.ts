@@ -25,6 +25,15 @@ class AuthAPI extends BaseAPI {
     }
   }
 
+  async logout() {
+    try {
+      this.endpoint = `/api/logout/`;
+      return await this.list();
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async me() {
     try {
       this.endpoint = `/api/users/me/`;

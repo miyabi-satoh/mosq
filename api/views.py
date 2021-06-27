@@ -1,7 +1,7 @@
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.shortcuts import get_object_or_404
 from django.http.response import FileResponse, JsonResponse
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from rest_framework import views, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
@@ -86,6 +86,15 @@ def login_view(request):
         "id": user.id,
         "username": user.username
     })
+
+
+@api_view()
+def logout_view(request):
+    """
+    ログアウト処理
+    """
+    logout(request)
+    return JsonResponse({"detail": "Logout"})
 
 
 @api_view()

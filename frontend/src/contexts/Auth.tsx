@@ -7,12 +7,16 @@ import { useLocation } from "react-router-dom";
 interface IAuthContext {
   currentUser: TUser | null | undefined;
   login: (username: string, password: string) => void;
+  logout: () => void;
 }
 
 const AuthContext = createContext<IAuthContext>({
   currentUser: undefined,
   login: (username: string, password: string) => {
     throw Error("login method is undefined.");
+  },
+  logout: () => {
+    throw Error("logout method is undefined.");
   },
 });
 
@@ -22,8 +26,9 @@ function useAuth() {
 
 function AuthProvider(props: React.PropsWithChildren<{}>) {
   const location = useLocation();
-  const [currentUser, setCurrentUser] =
-    useState<TUser | null | undefined>(undefined);
+  const [currentUser, setCurrentUser] = useState<TUser | null | undefined>(
+    undefined
+  );
 
   const login = async (username: string, password: string) => {
     try {
@@ -32,6 +37,15 @@ function AuthProvider(props: React.PropsWithChildren<{}>) {
     } catch (error) {
       setCurrentUser(null);
       throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await apiAuth.logout();
+    } catch (error) {
+    } finally {
+      setCurrentUser(undefined);
     }
   };
 
@@ -66,6 +80,7 @@ function AuthProvider(props: React.PropsWithChildren<{}>) {
       value={{
         currentUser,
         login,
+        logout,
       }}
     >
       {props.children}
