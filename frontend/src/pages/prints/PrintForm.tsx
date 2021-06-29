@@ -31,7 +31,7 @@ interface IFormInput {
   title: string;
   description: string;
   password: string;
-  printtype: number;
+  printtype: string;
   details: {
     unit: number;
     quantity: number;
@@ -49,8 +49,9 @@ function PrintForm() {
   const history = useHistory();
   const { printId } = useParams<{ printId: string }>();
   const [fetchError, setFetchError] = useState<boolean | undefined>(undefined);
-  const [postErrors, setPostErrors] =
-    useState<TFormError | undefined>(undefined);
+  const [postErrors, setPostErrors] = useState<TFormError | undefined>(
+    undefined
+  );
   const [unitList, setUnitList] = useState<TUnit[]>([]);
   const [printTypeList, setPrintTypeList] = useState<TPrintType[]>([]);
   const {
@@ -91,9 +92,9 @@ function PrintForm() {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const details = getValues("details");
-    const question_count = details.reduce((prev, current) => {
-      const value = current.quantity;
-      return isNaN(value) ? prev : prev + value;
+    const question_count = details.reduce((prev: number, current) => {
+      const value: number = current.quantity;
+      return isNaN(value) ? prev : Number(prev) + Number(value);
     }, 0);
     setValue("question_count", question_count);
   };
@@ -116,10 +117,10 @@ function PrintForm() {
       if (!unmounted) {
         setUnitList(_unitList);
         setPrintTypeList(_printTypeList);
-        setValue("title", _fetchData?.title!);
-        setValue("description", _fetchData?.description!);
-        setValue("password", _fetchData?.password!);
-        setValue("printtype", _fetchData?.printtype.id!);
+        setValue("title", _fetchData?.title || "");
+        setValue("description", _fetchData?.description || "");
+        setValue("password", _fetchData?.password || "");
+        setValue("printtype", `${_fetchData?.printtype?.id || ""}`);
         let question_count = 0;
         _fetchData?.details.map((detail: TPrintDetail) => {
           _unitList.map((unit: TUnit, i: number) => {
@@ -166,7 +167,7 @@ function PrintForm() {
     );
   }
 
-  console.log(errors);
+  // console.log(errors);
 
   return (
     <form noValidate onSubmit={handleSubmit(onSubmit)}>

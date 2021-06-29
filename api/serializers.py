@@ -49,7 +49,11 @@ class PrintDetailSerializer(serializers.ModelSerializer):
 class PrintSerializer(serializers.ModelSerializer):
     details = PrintDetailSerializer(many=True)
     # archives = ArchiveSerializer(many=True, read_only=True)
-    printtype = PrintTypeSerializer()
+    printtype = PrintTypeSerializer(read_only=True)
+    printtype_id = serializers.PrimaryKeyRelatedField(
+        queryset=PrintType.objects.filter(),
+        source='printtype',
+        write_only=True)
 
     class Meta:
         model = PrintHead
