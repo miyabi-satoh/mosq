@@ -7,7 +7,7 @@ from .models import PrintDetail, PrintHead, Question
 from config.settings import BASE_DIR
 
 
-def print_contest_pdf(printhead: PrintHead) -> File:
+def print_contest_pdf(printhead: PrintHead, title: str) -> File:
     template = ''
     tmplPath = os.path.join(BASE_DIR, 'api', 'resources',
                             'templates', 'contest.tex')
@@ -35,7 +35,7 @@ def print_contest_pdf(printhead: PrintHead) -> File:
         mt = Template(template)
         f.write(
             mt.render(
-                title=printhead.title,
+                title=title,
                 items=items,
             )
         )

@@ -26,7 +26,7 @@ urlpatterns = [
     # path('api-token-auth/', obtain_jwt_token),
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    path('printout/<int:printhead_id>/', print_out),
+    path('printout/', print_out),
 ]
 
 urlpatterns += staticfiles_urlpatterns()

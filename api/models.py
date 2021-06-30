@@ -129,12 +129,10 @@ class PrintHead(models.Model):
         ヘッダータイトル。
     description : str
         プリントの説明(任意)。
-    password : str
-        保護パスワード(任意)。最大32桁。
     """
     title = models.CharField('タイトル', max_length=100,)
     description = models.CharField('説明', null=True, blank=True, max_length=100)
-    password = models.CharField('パスワード', null=True, blank=True, max_length=32)
+    # password = models.CharField('パスワード', null=True, blank=True, max_length=32)
     printtype = models.ForeignKey(
         PrintType,
         on_delete=models.PROTECT,

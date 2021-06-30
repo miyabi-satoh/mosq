@@ -30,7 +30,7 @@ import { Alert } from "@material-ui/lab";
 interface IFormInput {
   title: string;
   description: string;
-  password: string;
+  // password: string;
   printtype: string;
   details: {
     unit: number;
@@ -72,7 +72,7 @@ function PrintForm() {
     const params = {
       title: formData.title,
       description: formData.description,
-      password: formData.password,
+      // password: formData.password,
       printtype: formData.printtype,
       details: formData.details.filter((d) => d.quantity > 0),
     };
@@ -119,13 +119,13 @@ function PrintForm() {
         setPrintTypeList(_printTypeList);
         setValue("title", _fetchData?.title || "");
         setValue("description", _fetchData?.description || "");
-        setValue("password", _fetchData?.password || "");
+        // setValue("password", _fetchData?.password || "");
         setValue("printtype", `${_fetchData?.printtype?.id || ""}`);
         let question_count = 0;
-        _fetchData?.details.map((detail: TPrintDetail) => {
-          _unitList.map((unit: TUnit, i: number) => {
+        _unitList.map((unit: TUnit, i: number) => {
+          setValue(`details.${i}.unit`, unit.id!);
+          _fetchData?.details.map((detail: TPrintDetail) => {
             if (detail.unit.id === unit.id) {
-              setValue(`details.${i}.unit`, unit.id!);
               setValue(`details.${i}.quantity`, detail.quantity);
               question_count += detail.quantity;
             }
@@ -145,6 +145,10 @@ function PrintForm() {
     return cleanup;
   }, [setValue, printId]);
 
+  if (fetchError === undefined) {
+    return <Indicator />;
+  }
+
   if (!currentUser) {
     return (
       <>
@@ -152,10 +156,6 @@ function PrintForm() {
         <RouterLink to={backUrl}>戻る</RouterLink>
       </>
     );
-  }
-
-  if (fetchError === undefined) {
-    return <Indicator />;
   }
 
   if (fetchError) {
@@ -182,7 +182,7 @@ function PrintForm() {
             プリント定義の{printId ? "編集" : "追加"}
           </Typography>
         </Grid>
-        <Grid item xs={12}>
+        <Grid item xs={12} md={6}>
           <TextField
             size="small"
             inputProps={{
@@ -194,25 +194,18 @@ function PrintForm() {
                 },
               }),
             }}
-            label="プリントのタイトル"
+            label="タイトル"
             error={!!errors.title}
-            helperText={
-              errors.title?.message ||
-              "プリントのヘッダーに印字するテキストを入力してください。"
-            }
+            helperText={errors.title?.message}
             fullWidth
           />
         </Grid>
         <Grid item xs={12} md={6}>
           <FormControl variant="outlined" size="small" fullWidth>
-            <InputLabel id="printtype-label">プリントの形式</InputLabel>
+            <InputLabel id="printtype-label">形式</InputLabel>
             <Controller
               render={({ field }) => (
-                <Select
-                  {...field}
-                  labelId="printtype-label"
-                  label="プリントの形式"
-                >
+                <Select {...field} labelId="printtype-label" label="形式">
                   {printTypeList.map((printType) => {
                     return (
                       <MenuItem
@@ -231,13 +224,10 @@ function PrintForm() {
                 required: "選択必須です。",
               }}
             />
-            <FormHelperText>
-              {errors.printtype?.message ||
-                `プリントの形式(フォーマット)を選択してください。`}
-            </FormHelperText>
+            <FormHelperText>{errors.printtype?.message}</FormHelperText>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={6}>
+        {/* <Grid item xs={12} md={6}>
           <TextField
             size="small"
             type="password"
@@ -261,7 +251,7 @@ function PrintForm() {
             }
             fullWidth
           />
-        </Grid>
+        </Grid> */}
         <Grid item xs={12}>
           <TextField
             size="small"
@@ -275,54 +265,55 @@ function PrintForm() {
             }}
             label="説明"
             error={!!errors.description}
-            helperText={
-              errors.description?.message ||
-              "説明があれば入力してください。(プリントには印字されません)"
-            }
+            helperText={errors.description?.message}
             fullWidth
           />
         </Grid>
         <Grid item xs={12}>
           <Typography variant="subtitle2">単元ごとの問題数</Typography>
         </Grid>
-        {unitList.map((unit: TUnit, i: number) => {
-          const grade = unit.grade as TGrade;
-          return (
-            <Grid item xs={12} sm={6} md={4} key={`unit-${i}`}>
-              <Box display="flex" alignItems="center">
-                <TextField
-                  size="small"
-                  type="number"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        {`${grade.grade_text}:${unit.unit_text}(${unit.question_count})`}
-                      </InputAdornment>
-                    ),
-                  }}
-                  inputProps={{
-                    ...register(`details.${i}.quantity`, {
-                      min: {
-                        value: 0,
-                        message: `0〜${unit.question_count}の範囲で入力してください。`,
-                      },
-                      max: {
-                        value: unit.question_count!,
-                        message: `0〜${unit.question_count}の範囲で入力してください。`,
-                      },
-                    }),
-                    min: 0,
-                    max: unit.question_count,
-                    style: { textAlign: "right" },
-                  }}
-                  onChange={handleChange}
-                  disabled={unit.question_count === 0}
-                  fullWidth
-                />
-              </Box>
-            </Grid>
-          );
-        })}
+        <Grid item container spacing={2}>
+          {unitList.map((unit: TUnit, i: number) => {
+            if (unit.question_count === 0) {
+              return null;
+            }
+            const grade = unit.grade as TGrade;
+            return (
+              <Grid item xs={12} sm={6} md={4} key={`unit-${i}`}>
+                <Box display="flex" alignItems="center">
+                  <TextField
+                    size="small"
+                    type="number"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          {`${grade.grade_text}:${unit.unit_text}(${unit.question_count})`}
+                        </InputAdornment>
+                      ),
+                    }}
+                    inputProps={{
+                      ...register(`details.${i}.quantity`, {
+                        min: {
+                          value: 0,
+                          message: `0〜${unit.question_count}の範囲で入力してください。`,
+                        },
+                        max: {
+                          value: unit.question_count!,
+                          message: `0〜${unit.question_count}の範囲で入力してください。`,
+                        },
+                      }),
+                      min: 0,
+                      max: unit.question_count,
+                      style: { textAlign: "right" },
+                    }}
+                    onChange={handleChange}
+                    fullWidth
+                  />
+                </Box>
+              </Grid>
+            );
+          })}
+        </Grid>
         {postErrors && (
           <Grid item xs={12}>
             <Alert severity="error">エラーがあります。</Alert>

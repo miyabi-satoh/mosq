@@ -36,6 +36,10 @@ class AuthAPI extends BaseAPI {
 
   async me() {
     try {
+      // CSRF トークンを更新
+      this.endpoint = `/api/csrf-cookie/`;
+      await this.list();
+
       this.endpoint = `/api/users/me/`;
       return await this.list();
     } catch (error) {

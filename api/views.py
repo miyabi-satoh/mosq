@@ -44,10 +44,15 @@ class HelloView(views.APIView):
         return Response({"message": "Hello World!"})
 
 
-@api_view()
-def print_out(request, printhead_id):
-    printhead = get_object_or_404(PrintHead, pk=printhead_id)
-    file = print_contest_pdf(printhead)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def print_out(request):
+    printhead = get_object_or_404(PrintHead, pk=request.data["printhead"])
+    title = request.data["title"]
+    if not title:
+        title = printhead.title
+    # return JsonResponse(request.data)
+    file = print_contest_pdf(printhead, title)
     if not file:
         return None
 
@@ -55,7 +60,7 @@ def print_out(request, printhead_id):
     archive.printhead = printhead
     archive.file = file
     archive.title = printhead.title
-    if request.query_params.get('archive'):
+    if request.data.get('archive'):
         archive.save()
 
     return FileResponse(archive.file)

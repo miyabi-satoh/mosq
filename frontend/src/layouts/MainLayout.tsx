@@ -36,6 +36,7 @@ const useStyles = makeStyles((theme: Theme) =>
       position: "fixed",
       bottom: theme.spacing(2),
       right: theme.spacing(2),
+      zIndex: 100,
     },
   })
 );
@@ -55,7 +56,7 @@ function HideOnScroll(props: React.PropsWithChildren<{}>) {
       </Slide>
       <Zoom in={trigger}>
         <Fab
-          color="secondary"
+          color="default"
           size="small"
           onClick={handleClick}
           className={classes.scrollTop}
@@ -127,7 +128,7 @@ export function MainLayout({ children, ...props }: ContainerProps) {
 
   return (
     <div className={classes.root}>
-      <Container {...props} className={classes.main} fixed>
+      <Container {...props} className={classes.main} fixed maxWidth="md">
         <HideOnScroll>
           <AppBar>
             <Toolbar disableGutters>
@@ -137,16 +138,14 @@ export function MainLayout({ children, ...props }: ContainerProps) {
               </RouterButton>
               <Spacer />
               <RouterButton color="inherit" to="/prints">
-                プリント作成
+                プリント選択
               </RouterButton>
               <Spacer />
               <RouterButton color="inherit" to="/archives">
                 アーカイブ
               </RouterButton>
               <Spacer />
-              <Box mx={4}>
-                <AccountMenu />
-              </Box>
+              <AccountMenu />
             </Toolbar>
           </AppBar>
         </HideOnScroll>
