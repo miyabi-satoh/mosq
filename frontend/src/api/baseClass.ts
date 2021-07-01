@@ -14,6 +14,7 @@ export class BaseAPI {
   constructor() {
     axios.defaults.xsrfCookieName = "csrftoken";
     axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
+    axios.defaults.withCredentials = true;
     this.endpoint = "";
   }
 

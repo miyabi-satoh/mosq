@@ -4,31 +4,24 @@ import {
   Grid,
   Typography,
   Box,
-  Button,
   Card,
   CardActions,
   CardContent,
 } from "@material-ui/core";
-import { RouterButton, RouterLink, Spacer } from "components";
-import PrintForm from "./PrintForm";
+import { Indicator, RouterButton, RouterLink } from "components";
 import { apiPrints, TPrintHead } from "api";
-import { Alert } from "@material-ui/lab";
+import { useAuth } from "contexts/Auth";
+import { AddCircleOutline } from "@material-ui/icons";
+import PrintForm from "./PrintForm";
+import PrintOut from "./PrintOut";
 
 const thisUrl = "/prints";
 
 function Index() {
-  const [printList, setPrintList] =
-    useState<TPrintHead[] | undefined>(undefined);
-
-  const handleRemove = async (id: string) => {
-    try {
-      await apiPrints.delete(id);
-      const data = await apiPrints.list();
-      console.log(data);
-
-      setPrintList(data.results);
-    } catch (error) {}
-  };
+  const { currentUser } = useAuth();
+  const [printList, setPrintList] = useState<TPrintHead[] | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     let unmounted = false;
@@ -50,58 +43,62 @@ function Index() {
     return cleanup;
   }, []);
 
+  if (printList === undefined) {
+    return <Indicator />;
+  }
+
   return (
     <Grid container spacing={2} alignItems="center">
       <Grid item xs={12} sm>
         <Typography component="h2" variant="h6">
-          プリントセットの一覧
+          プリント選択
         </Typography>
       </Grid>
-      <Grid item xs={12} sm={5} md={3}>
-        <RouterButton
-          fullWidth
-          variant="contained"
-          color="primary"
-          to={`${thisUrl}/add`}
-        >
-          プリントセットを追加
-        </RouterButton>
-      </Grid>
-      <Grid item container>
-        {printList?.length ? (
-          <>
-            <Grid item xs={12}>
-              <Box mb={2}>
-                <Alert severity="warning">
-                  このページから印刷すると、問題はランダムに抽出されます。
-                  また、生成されたプリントはアーカイブされます。
-                </Alert>
-              </Box>
-            </Grid>
-            {printList.map((printhead) => {
-              const question_count = printhead.details.reduce(
-                (prev, current) => {
-                  const value = Number(current.quantity);
-                  return isNaN(value) ? prev : prev + value;
-                },
-                0
-              );
-
-              return (
-                <Grid item xs={12} sm={6} key={`printhead-${printhead.id}`}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography component="h3" variant="h5">
-                        <RouterLink to={`${thisUrl}/${printhead.id}`}>
-                          {printhead.title}
-                        </RouterLink>
-                      </Typography>
-                      <Typography color="textSecondary">
-                        全 {question_count} 問
-                      </Typography>
-                    </CardContent>
+      {currentUser && (
+        <Grid item xs={12} sm={5} md={3}>
+          <RouterButton
+            fullWidth
+            variant="contained"
+            color="primary"
+            startIcon={<AddCircleOutline />}
+            to={`${thisUrl}/add`}
+          >
+            プリント定義を追加
+          </RouterButton>
+        </Grid>
+      )}
+      {printList.length === 0 ? (
+        <Grid item xs={12}>
+          <Box textAlign="center" py={4}>
+            プリント定義が未登録です。
+          </Box>
+        </Grid>
+      ) : (
+        <Grid item container spacing={2}>
+          {printList.map((printhead) => {
+            return (
+              <Grid item xs={12} md={6} key={`printhead-${printhead.id}`}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography component="h3" variant="h6">
+                      <RouterLink to={`${thisUrl}/${printhead.id}`}>
+                        {printhead.title}
+                      </RouterLink>
+                    </Typography>
+                    <Typography color="textSecondary">
+                      {printhead.description}
+                    </Typography>
+                  </CardContent>
+                  {currentUser && (
                     <CardActions>
-                      <Button
+                      <RouterButton
+                        color="primary"
+                        to={`${thisUrl}/${printhead.id}/edit`}
+                        size="small"
+                      >
+                        編集
+                      </RouterButton>
+                      {/* <Button
                         color="primary"
                         variant="outlined"
                         onClick={() =>
@@ -110,30 +107,27 @@ function Index() {
                           )
                         }
                       >
-                        印刷
+                        作成のみ
                       </Button>
-                      <Spacer />
                       <Button
                         color="secondary"
                         variant="outlined"
-                        onClick={() => handleRemove(`${printhead.id}`)}
+                        onClick={() =>
+                          window.open(
+                            `http://localhost:8000/printout/${printhead.id}/?archive`
+                          )
+                        }
                       >
-                        削除
-                      </Button>
+                        作成してアーカイブ
+                      </Button> */}
                     </CardActions>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </>
-        ) : (
-          <Grid item xs={12}>
-            <Box textAlign="center" py={4}>
-              プリントセットは未登録です。
-            </Box>
-          </Grid>
-        )}
-      </Grid>
+                  )}
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+      )}
     </Grid>
   );
 }
@@ -142,7 +136,9 @@ function Prints() {
   return (
     <Box mx={2}>
       <Switch>
-        <Route exact path={`${thisUrl}/:printId`} component={PrintForm} />
+        <Route exact path={`${thisUrl}/add`} component={PrintForm} />
+        <Route exact path={`${thisUrl}/:printId/edit`} component={PrintForm} />
+        <Route exact path={`${thisUrl}/:printId`} component={PrintOut} />
         <Route component={Index} />
       </Switch>
     </Box>

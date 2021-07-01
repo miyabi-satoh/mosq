@@ -27,6 +27,10 @@ class QuestionAdmin(admin.ModelAdmin):
             return ''
 
 
+class PrintTypeAdmin(admin.ModelAdmin):
+    list_display = ('type_text', 'method', 'template', 'cover', 'id')
+
+
 class PrintHeadAdmin(admin.ModelAdmin):
     list_display = ('title', 'total_questions', 'id')
 
@@ -43,6 +47,7 @@ class ArchiveAdmin(admin.ModelAdmin):
 admin.site.register(models.Grade, GradeAdmin)
 admin.site.register(models.Unit, UnitAdmin)
 admin.site.register(models.Question, QuestionAdmin)
+admin.site.register(models.PrintType, PrintTypeAdmin)
 admin.site.register(models.PrintHead, PrintHeadAdmin)
 admin.site.register(models.PrintDetail, PrintDetailAdmin)
 admin.site.register(models.Archive, ArchiveAdmin)

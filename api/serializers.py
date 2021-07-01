@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Archive, Grade, PrintDetail, PrintHead, Unit, Question
+from .models import Archive, Grade, PrintDetail, PrintHead, PrintType, Unit, Question
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -15,24 +15,42 @@ class GradeSerializer(serializers.ModelSerializer):
 
 
 class UnitSerializer(serializers.ModelSerializer):
-    # question_count = serializers.IntegerField(read_only=True)
     question_count = serializers.SerializerMethodField()
-    grade = GradeSerializer()
 
     class Meta:
         model = Unit
         fields = '__all__'
-        # fields = ['id', 'unit_code', 'unit_text',
-        #           'grade', 'question_count']
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response['grade'] = GradeSerializer(instance.grade).data
+        return response
 
     def get_question_count(self, obj):
         return Question.objects.filter(unit=obj.id).count()
 
 
+class ArchiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Archive
+        fields = '__all__'
+
+
+class PrintTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrintType
+        fields = ['id', 'type_text']
+
+
 class PrintDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrintDetail
-        fields = ['id', 'unit', 'quantity']
+        exclude = ['printhead']
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response['unit'] = UnitSerializer(instance.unit).data
+        return response
 
 
 class PrintSerializer(serializers.ModelSerializer):
@@ -42,8 +60,16 @@ class PrintSerializer(serializers.ModelSerializer):
         model = PrintHead
         fields = '__all__'
 
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response['printtype'] = PrintTypeSerializer(instance.printtype).data
+        return response
+
     def create(self, validated_data):
         details_data = validated_data.pop('details')
+        if not details_data:
+            raise serializers.ValidationError('単元と問題数を入力してください。')
+
         printhead = PrintHead.objects.create(**validated_data)
         for detail_data in details_data:
             PrintDetail.objects.create(printhead=printhead, **detail_data)
@@ -52,15 +78,12 @@ class PrintSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         details_data = validated_data.pop('details')
+        if not details_data:
+            raise serializers.ValidationError('単元と問題数を入力してください。')
+
         PrintDetail.objects.filter(printhead=instance).delete()
         for detail_data in details_data:
             PrintDetail.objects.create(printhead=instance, **detail_data)
         instance.title = validated_data.get('title', instance.title)
         instance.save()
         return instance
-
-
-class ArchiveSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Archive
-        fields = '__all__'

@@ -16,7 +16,7 @@ class Command(BaseCommand):
         path = os.path.normpath(path)
         self.stdout.write(path)
 
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             tables = [
                 'api_printdetail',
                 'api_printhead',

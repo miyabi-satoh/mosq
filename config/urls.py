@@ -18,13 +18,15 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf.urls.static import static
 from django.conf import settings
 from django.urls import path, include
+# from rest_framework_jwt.views import obtain_jwt_token
 from api.views import print_out
 
 urlpatterns = [
     path('', include('frontend.urls')),
+    # path('api-token-auth/', obtain_jwt_token),
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    path('printout/<int:printhead_id>/', print_out),
+    path('printout/', print_out),
 ]
 
 urlpatterns += staticfiles_urlpatterns()

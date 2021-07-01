@@ -7,13 +7,12 @@ import {
   Button,
   Box,
 } from "@material-ui/core";
-import { TArchive } from "api";
-import { apiArchives } from "api/archives";
-import { Spacer } from "components";
 import { formatDistance } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useState, useEffect } from "react";
 import { Switch, Route } from "react-router-dom";
+import { TArchive, apiArchives } from "api";
+import { Spacer } from "components";
 
 function Index() {
   const [archiveList, setArchiveList] =

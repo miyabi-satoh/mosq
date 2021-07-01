@@ -1,23 +1,24 @@
+import React, { useState } from "react";
 import {
   AppBar,
   Box,
-  Fab,
-  Grid,
-  Slide,
-  Toolbar,
-  Zoom,
-} from "@material-ui/core";
-import { useScrollTrigger } from "@material-ui/core";
-import {
-  createStyles,
-  makeStyles,
-  Theme,
   Container,
   ContainerProps,
+  createStyles,
+  Fab,
+  IconButton,
+  makeStyles,
+  Menu,
+  MenuItem,
+  Slide,
+  Theme,
+  Toolbar,
+  useScrollTrigger,
+  Zoom,
 } from "@material-ui/core";
-import { KeyboardArrowUp } from "@material-ui/icons";
-import { RouterButton } from "components";
-import React from "react";
+import { AccountCircle, KeyboardArrowUp, Person } from "@material-ui/icons";
+import { RouterButton, RouterLink, Spacer } from "components";
+import { useAuth } from "contexts/Auth";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -35,6 +36,7 @@ const useStyles = makeStyles((theme: Theme) =>
       position: "fixed",
       bottom: theme.spacing(2),
       right: theme.spacing(2),
+      zIndex: 100,
     },
   })
 );
@@ -54,7 +56,7 @@ function HideOnScroll(props: React.PropsWithChildren<{}>) {
       </Slide>
       <Zoom in={trigger}>
         <Fab
-          color="secondary"
+          color="default"
           size="small"
           onClick={handleClick}
           className={classes.scrollTop}
@@ -66,37 +68,89 @@ function HideOnScroll(props: React.PropsWithChildren<{}>) {
   );
 }
 
+function AccountMenu() {
+  const { currentUser, logout } = useAuth();
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    handleClose();
+    logout();
+  };
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  return (
+    <>
+      <IconButton
+        color="inherit"
+        aria-controls="account-menu"
+        aria-haspopup="true"
+        onClick={handleClick}
+      >
+        {currentUser ? <AccountCircle /> : <Person />}
+      </IconButton>
+      <Menu
+        id="account-menu"
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+        getContentAnchorEl={null}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+      >
+        {currentUser ? (
+          [
+            <MenuItem key="1" disabled divider>
+              {currentUser.username}
+            </MenuItem>,
+            <MenuItem key="3" onClick={handleLogout}>
+              ログアウト
+            </MenuItem>,
+          ]
+        ) : (
+          <MenuItem onClick={handleClose}>
+            <RouterLink to="/login">ログイン</RouterLink>
+          </MenuItem>
+        )}
+      </Menu>
+    </>
+  );
+}
+
 export function MainLayout({ children, ...props }: ContainerProps) {
   const classes = useStyles();
 
   return (
     <div className={classes.root}>
-      <Container {...props} component="main" className={classes.main} fixed>
+      <Container {...props} className={classes.main} fixed maxWidth="md">
         <HideOnScroll>
           <AppBar>
             <Toolbar disableGutters>
-              <Grid container>
-                <Grid item xs={4}>
-                  <RouterButton fullWidth color="inherit" to="/">
-                    Home
-                  </RouterButton>
-                </Grid>
-                <Grid item xs={4}>
-                  <RouterButton fullWidth color="inherit" to="/prints">
-                    新規作成
-                  </RouterButton>
-                </Grid>
-                <Grid item xs={4}>
-                  <RouterButton fullWidth color="inherit" to="/archives">
-                    再印刷
-                  </RouterButton>
-                </Grid>
-              </Grid>
+              <Spacer />
+              <RouterButton color="inherit" to="/">
+                Home
+              </RouterButton>
+              <Spacer />
+              <RouterButton color="inherit" to="/prints">
+                プリント選択
+              </RouterButton>
+              <Spacer />
+              <RouterButton color="inherit" to="/archives">
+                アーカイブ
+              </RouterButton>
+              <Spacer />
+              <AccountMenu />
             </Toolbar>
           </AppBar>
         </HideOnScroll>
         <Toolbar />
-        <Box mt={2} mb={10}>
+        <Box mt={2} mb={4} component="main">
           {children}
         </Box>
       </Container>

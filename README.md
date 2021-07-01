@@ -17,8 +17,9 @@
 ```
 pip install -r reuirements.txt
 cd config
-python generate_secretkey_setting.py
+python generate_secretkey_setting.py > local_settings.py
 cd ..
 python manage.py migrate
 python manage.py import_questions
+python manage.py loaddata api_printtype.json
 ```
