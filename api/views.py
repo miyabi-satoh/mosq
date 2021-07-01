@@ -1,3 +1,4 @@
+import importlib
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.shortcuts import get_object_or_404
 from django.http.response import FileResponse, JsonResponse
@@ -6,7 +7,7 @@ from rest_framework import views, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes
-from .utils import print_contest_pdf
+# from .utils import print_contest_pdf
 from .models import Archive, PrintType, Unit, PrintHead
 from .serializers import ArchiveSerializer, PrintSerializer, PrintTypeSerializer, UnitSerializer
 
@@ -48,22 +49,30 @@ class HelloView(views.APIView):
 @permission_classes([AllowAny])
 def print_out(request):
     printhead = get_object_or_404(PrintHead, pk=request.data["printhead"])
-    title = request.data["title"]
-    if not title:
-        title = printhead.title
-    # return JsonResponse(request.data)
-    file = print_contest_pdf(printhead, title)
-    if not file:
-        return None
+    try:
+        module = importlib.import_module('api.utils')
+        method = getattr(module, printhead.printtype.method)
 
-    archive = Archive()
-    archive.printhead = printhead
-    archive.file = file
-    archive.title = printhead.title
-    if request.data.get('archive'):
-        archive.save()
+        title = request.data["title"]
+        if not title:
+            title = printhead.title
 
-    return FileResponse(archive.file)
+        file = method(printhead, title)
+        if not file:
+            return Response({"message": "file error."})
+
+        archive = Archive()
+        archive.printhead = printhead
+        archive.file = file
+        archive.title = printhead.title
+        if request.data.get('archive'):
+            archive.save()
+
+        return FileResponse(archive.file)
+    except ModuleNotFoundError:
+        return Response({"message": "module not found."})
+    except AttributeError:
+        return Response({"message": "method not found"})
 
 
 @ensure_csrf_cookie

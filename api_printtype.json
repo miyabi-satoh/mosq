@@ -1,1 +1,1 @@
-[{"model": "api.printtype", "pk": 1, "fields": {"type_text": "計算コンテスト(5問/頁, 解答欄あり)", "template": "template/contest.tex", "cover": ""}}]
+[{"model": "api.printtype", "pk": 1, "fields": {"type_text": "計算コンテスト(5問/頁, 解答欄あり)", "method": "print_contest_pdf", "template": "template/contest.tex", "cover": ""}}]

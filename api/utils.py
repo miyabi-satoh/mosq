@@ -4,14 +4,11 @@ import subprocess
 from django.core.files import File
 from mako.template import Template
 from .models import PrintDetail, PrintHead, Question
-from config.settings import BASE_DIR
 
 
 def print_contest_pdf(printhead: PrintHead, title: str) -> File:
     template = ''
-    tmplPath = os.path.join(BASE_DIR, 'api', 'resources',
-                            'templates', 'contest.tex')
-    with open(tmplPath, 'r', encoding='utf-8') as f:
+    with open(printhead.printtype.template.path, 'r', encoding='utf-8') as f:
         template = f.read()
 
     if not template:
@@ -24,8 +21,11 @@ def print_contest_pdf(printhead: PrintHead, title: str) -> File:
     items = []
     printdetails = PrintDetail.objects.filter(printhead=printhead).all()
     for detail in printdetails:
-        query_sets = Question.objects.filter(unit=detail.unit).order_by('?')[
-            :detail.quantity]
+        query_sets = (
+            Question.objects
+            .filter(unit=detail.unit)
+            .order_by('?')[:detail.quantity]
+        )
         for q in query_sets:
             items.append(q)
 

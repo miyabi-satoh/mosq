@@ -102,12 +102,16 @@ class PrintType(models.Model):
     ---------
     type_text : str
         形式の名称。
+    method: str
+        Pythonメソッド名。
     template : str
         テンプレートファイル
     cover : str
         表紙。
     """
+
     type_text = models.CharField('形式', max_length=100)
+    method = models.CharField('メソッド', max_length=100)
     template = models.FileField('テンプレート', upload_to='template')
     cover = models.FileField('表紙', upload_to='cover', null=True, blank=True)
 

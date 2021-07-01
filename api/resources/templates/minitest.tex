@@ -1,4 +1,4 @@
-%%%%% 小テスト用(8問x4セット/ページ)
+%%%%% 小テスト(8問x4セット/頁)
 \documentclass[uplatex,a4j,11pt]{jsarticle}
 \usepackage[margin=15mm]{geometry}
 \usepackage{emath}
@@ -9,7 +9,7 @@
 \usepackage{titlesec}
 
 \renewcommand{\thesection}{\arabic{section}}
-\titleformat{\section}{\large}{No.\thesection}{1em}{}
+\titleformat{\section}{\large}{No.\thesection}{0em}{}
 
 \setlength\parindent{0pt}
 
@@ -18,26 +18,110 @@ leftmargin=*,
 itemindent=0pt,
 itemsep=1mm,
 labelsep=1ex,
-label=(\arabic*)}
+label=□(\arabic*)}
 
 \pagestyle{fancy}
 \lhead{@[title]@}
-
+\rhead[]{}
 \begin{document}
 % for section in data:
+\begin{minipage}[t][6cm][t]{\linewidth}
 \section{}
 \begin{multicols}{2}
 \begin{enumerate}
 % for item in section
     \item @[item.question\_text]@
+    \item @[item.question\_text]@
+    \item @[item.question\_text]@
+    \item @[item.question\_text]@
+    \item @[item.question\_text]@
+    \item @[item.question\_text]@
+    \item @[item.question\_text]@
+    \item @[item.question\_text]@
 % endfor
 \end{enumerate}
+\vfill
 \end{multicols}
+\end{minipage}
 % if loop.index % 4 == 0:
+\begin{minipage}[t][6cm][t]{\linewidth}
+  \section{}
+  \begin{multicols}{2}
+  \begin{enumerate}
+  % for item in section
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+  % endfor
+  \end{enumerate}
+  \vfill
+  \end{multicols}
+\end{minipage}
+\begin{minipage}[t][6cm][t]{\linewidth}
+  \section{}
+  \begin{multicols}{2}
+  \begin{enumerate}
+  % for item in section
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+  % endfor
+  \end{enumerate}
+  \vfill
+  \end{multicols}
+\end{minipage}
+\begin{minipage}[t][6cm][t]{\linewidth}
+  \section{}
+  \begin{multicols}{2}
+  \begin{enumerate}
+  % for item in section
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+  % endfor
+  \end{enumerate}
+  \vfill
+  \end{multicols}
+\end{minipage}
+\newpage
+\begin{minipage}[t][6cm][t]{\linewidth}
+  \section{}
+  \begin{multicols}{2}
+  \begin{enumerate}
+  % for item in section
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+      \item @[item.question\_text]@
+  % endfor
+  \end{enumerate}
+  \vfill
+  \end{multicols}
+\end{minipage}
 \newpage
 % endif
 % endfor
 
+\setcounter{section}{0}
 \lhead{@[title]@ 解答}
 \begin{multicols}{2}
 % for section in data

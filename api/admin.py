@@ -28,7 +28,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 
 class PrintTypeAdmin(admin.ModelAdmin):
-    list_display = ('type_text', 'template', 'cover', 'id')
+    list_display = ('type_text', 'method', 'template', 'cover', 'id')
 
 
 class PrintHeadAdmin(admin.ModelAdmin):
