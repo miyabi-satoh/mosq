@@ -1,18 +1,22 @@
 import {
   Box,
   Button,
+  createStyles,
   FormControl,
   FormHelperText,
   Grid,
-  InputAdornment,
+  IconButton,
   InputLabel,
+  makeStyles,
   MenuItem,
+  OutlinedInput,
   Select,
   TextField,
+  Theme,
   Typography,
 } from "@material-ui/core";
 import { useEffect, useState } from "react";
-import { Controller, SubmitHandler, useForm, useWatch } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { useHistory, useParams } from "react-router-dom";
 import {
   apiMaster,
@@ -26,30 +30,48 @@ import {
 import { Indicator, RouterButton, RouterLink } from "components";
 import { useAuth } from "contexts/Auth";
 import { Alert } from "@material-ui/lab";
+import { AddCircle, RemoveCircle } from "@material-ui/icons";
 
-interface IFormInput {
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    inputQuantity: {
+      width: 120,
+      minWidth: 120,
+      marginRight: theme.spacing(1),
+    },
+    selectUnits: {
+      flexGrow: 1,
+    },
+    iconRemove: {
+      marginTop: 5,
+    },
+  })
+);
+
+type TFormValues = {
   title: string;
   description: string;
-  // password: string;
-  printtype: string;
+  printtype: number | "";
   details: {
-    unit: number;
+    units: number[];
     quantity: number;
   }[];
   question_count: number;
-}
-type TFormError = {
-  [P in keyof IFormInput]?: string[];
+};
+
+type TPostErrors = {
+  [P in keyof TFormValues]?: string[];
 };
 
 const backUrl = `/prints`;
 
 function PrintForm() {
+  const classes = useStyles();
   const { currentUser } = useAuth();
   const history = useHistory();
   const { printId } = useParams<{ printId: string }>();
   const [fetchError, setFetchError] = useState<boolean | undefined>(undefined);
-  const [postErrors, setPostErrors] = useState<TFormError | undefined>(
+  const [postErrors, setPostErrors] = useState<TPostErrors | undefined>(
     undefined
   );
   const [unitList, setUnitList] = useState<TUnit[]>([]);
@@ -61,14 +83,19 @@ function PrintForm() {
     getValues,
     setValue,
     formState: { errors },
-  } = useForm<IFormInput>();
+  } = useForm<TFormValues>();
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "details",
+  });
   const questionCount = useWatch({
     control,
     name: "question_count",
     defaultValue: 0,
   });
 
-  const onSubmit: SubmitHandler<IFormInput> = async (formData) => {
+  const onSubmit = async (formData: TFormValues) => {
+    setPostErrors(undefined);
     const params = {
       title: formData.title,
       description: formData.description,
@@ -90,7 +117,7 @@ function PrintForm() {
     }
   };
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = () => {
     const details = getValues("details");
     const question_count = details.reduce((prev: number, current) => {
       const value: number = current.quantity;
@@ -120,19 +147,20 @@ function PrintForm() {
         setValue("title", _fetchData?.title || "");
         setValue("description", _fetchData?.description || "");
         // setValue("password", _fetchData?.password || "");
-        setValue("printtype", `${_fetchData?.printtype?.id || ""}`);
+        setValue("printtype", _fetchData?.printtype?.id || "");
         let question_count = 0;
-        _unitList.map((unit: TUnit, i: number) => {
-          setValue(`details.${i}.unit`, unit.id!);
-          _fetchData?.details.map((detail: TPrintDetail) => {
-            if (detail.unit.id === unit.id) {
-              setValue(`details.${i}.quantity`, detail.quantity);
+        if (!!_fetchData) {
+          append(
+            _fetchData?.details.map((detail: TPrintDetail, index) => {
+              const units = detail.units.map((u) => u.id) as number[];
               question_count += detail.quantity;
-            }
-            return false;
-          });
-          return false;
-        });
+              return {
+                units,
+                quantity: detail.quantity,
+              };
+            })
+          );
+        }
         setValue("question_count", question_count);
         setFetchError(printId !== undefined && _fetchData === undefined);
       }
@@ -143,7 +171,7 @@ function PrintForm() {
       unmounted = true;
     };
     return cleanup;
-  }, [setValue, printId]);
+  }, [setValue, append, printId]);
 
   if (fetchError === undefined) {
     return <Indicator />;
@@ -167,13 +195,23 @@ function PrintForm() {
     );
   }
 
-  // console.log(errors);
+  if (!!errors) {
+    console.log(errors);
+  }
+  if (!!postErrors) {
+    console.log(postErrors);
+  }
 
   return (
     <form noValidate onSubmit={handleSubmit(onSubmit)}>
       <input
         style={{ display: "none" }}
-        {...register("question_count")}
+        {...register("question_count", {
+          min: {
+            value: 1,
+            message: "問題数を指定してください。",
+          },
+        })}
         type="number"
       />
       <Grid container spacing={2} alignItems="center">
@@ -182,50 +220,57 @@ function PrintForm() {
             プリント定義の{printId ? "編集" : "追加"}
           </Typography>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField
-            size="small"
-            inputProps={{
-              ...register("title", {
-                required: "入力必須です。",
-                maxLength: {
-                  value: 100,
-                  message: "100文字以内で入力してください。",
-                },
-              }),
-            }}
-            label="タイトル"
-            error={!!errors.title}
-            helperText={errors.title?.message}
-            fullWidth
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <FormControl variant="outlined" size="small" fullWidth>
-            <InputLabel id="printtype-label">形式</InputLabel>
-            <Controller
-              render={({ field }) => (
-                <Select {...field} labelId="printtype-label" label="形式">
-                  {printTypeList.map((printType) => {
-                    return (
-                      <MenuItem
-                        key={`printtype-${printType.id}`}
-                        value={printType.id}
-                      >
-                        {printType.type_text}
-                      </MenuItem>
-                    );
-                  })}
-                </Select>
-              )}
-              control={control}
-              name="printtype"
-              rules={{
-                required: "選択必須です。",
+        <Grid item container spacing={2} alignItems="flex-start">
+          <Grid item xs={12} md={6}>
+            <TextField
+              size="small"
+              inputProps={{
+                ...register("title", {
+                  required: "入力必須です。",
+                  maxLength: {
+                    value: 100,
+                    message: "100文字以内で入力してください。",
+                  },
+                }),
               }}
+              label="タイトル"
+              error={!!errors.title}
+              helperText={errors.title?.message}
+              fullWidth
             />
-            <FormHelperText>{errors.printtype?.message}</FormHelperText>
-          </FormControl>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <FormControl variant="outlined" size="small" fullWidth>
+              <InputLabel id="printtype-label">形式</InputLabel>
+              <Controller
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    labelId="printtype-label"
+                    label="形式"
+                    error={!!errors.printtype}
+                  >
+                    {printTypeList.map((printType) => {
+                      return (
+                        <MenuItem
+                          key={`printtype-${printType.id}`}
+                          value={printType.id}
+                        >
+                          {printType.type_text}
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                )}
+                control={control}
+                name="printtype"
+                rules={{
+                  required: "選択必須です。",
+                }}
+              />
+              <FormHelperText error>{errors.printtype?.message}</FormHelperText>
+            </FormControl>
+          </Grid>
         </Grid>
         {/* <Grid item xs={12} md={6}>
           <TextField
@@ -270,49 +315,108 @@ function PrintForm() {
           />
         </Grid>
         <Grid item xs={12}>
-          <Typography variant="subtitle2">単元ごとの問題数</Typography>
+          <Typography variant="subtitle2">出題設定</Typography>
+          <FormHelperText error>
+            {errors.question_count?.message}
+          </FormHelperText>
         </Grid>
-        <Grid item container spacing={2}>
-          {unitList.map((unit: TUnit, i: number) => {
-            if (unit.question_count === 0) {
-              return null;
-            }
-            const grade = unit.grade as TGrade;
-            return (
-              <Grid item xs={12} sm={6} md={4} key={`unit-${i}`}>
-                <Box display="flex" alignItems="center">
-                  <TextField
-                    size="small"
-                    type="number"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          {`${grade.grade_text}:${unit.unit_text}(${unit.question_count})`}
-                        </InputAdornment>
-                      ),
+        {fields.map((fieldItem, index) => {
+          return (
+            <Grid item xs={12} key={fieldItem.id}>
+              <Box display="flex" alignItems="flex-start">
+                <TextField
+                  size="small"
+                  type="number"
+                  inputProps={{
+                    ...register(`details.${index}.quantity` as const, {
+                      required: "入力必須です。",
+                      min: {
+                        value: 1,
+                        message: "不正な値です。",
+                      },
+                    }),
+                    min: 1,
+                    style: { textAlign: "right" },
+                  }}
+                  defaultValue={fieldItem.quantity}
+                  label="問題数"
+                  onChange={handleChange}
+                  className={classes.inputQuantity}
+                  error={!!errors.details?.[index]?.quantity}
+                  helperText={errors.details?.[index]?.quantity?.message}
+                />
+                <FormControl
+                  variant="outlined"
+                  size="small"
+                  className={classes.selectUnits}
+                >
+                  <InputLabel id={`details-${index}-units-label`}>
+                    単元
+                  </InputLabel>
+                  <Controller
+                    render={({ field }) => (
+                      <Select
+                        {...field}
+                        labelId={`details-${index}-units-label`}
+                        multiple
+                        input={<OutlinedInput label="単元" />}
+                        error={!!errors.details?.[index]?.units}
+                      >
+                        {unitList.map((unit) => {
+                          if (unit.question_count === 0) {
+                            return null;
+                          }
+                          const grade = unit.grade as TGrade;
+                          return (
+                            <MenuItem
+                              key={`${fieldItem.id}-${unit.id}`}
+                              value={unit.id}
+                            >
+                              {`${grade.grade_text}:${unit.unit_text}(${unit.question_count})`}
+                            </MenuItem>
+                          );
+                        })}
+                      </Select>
+                    )}
+                    control={control}
+                    name={`details.${index}.units`}
+                    defaultValue={fieldItem.units}
+                    rules={{
+                      required: "選択必須です。",
                     }}
-                    inputProps={{
-                      ...register(`details.${i}.quantity`, {
-                        min: {
-                          value: 0,
-                          message: `0〜${unit.question_count}の範囲で入力してください。`,
-                        },
-                        max: {
-                          value: unit.question_count!,
-                          message: `0〜${unit.question_count}の範囲で入力してください。`,
-                        },
-                      }),
-                      min: 0,
-                      max: unit.question_count,
-                      style: { textAlign: "right" },
-                    }}
-                    onChange={handleChange}
-                    fullWidth
                   />
-                </Box>
-              </Grid>
-            );
-          })}
+                  <FormHelperText error>
+                    {(errors.details?.[index]?.units as any)?.message}
+                  </FormHelperText>
+                </FormControl>
+                <IconButton
+                  className={classes.iconRemove}
+                  size="small"
+                  color="secondary"
+                  onClick={() => {
+                    remove(index);
+                    handleChange();
+                  }}
+                >
+                  <RemoveCircle />
+                </IconButton>
+              </Box>
+            </Grid>
+          );
+        })}
+        <Grid item xs={12}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddCircle />}
+            onClick={() =>
+              append({
+                units: [],
+              })
+            }
+          >
+            設問追加
+          </Button>
         </Grid>
         {postErrors && (
           <Grid item xs={12}>

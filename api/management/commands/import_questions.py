@@ -18,8 +18,10 @@ class Command(BaseCommand):
 
         with open(path, encoding='utf-8') as f:
             tables = [
+                'api_archive',
                 'api_printdetail',
                 'api_printhead',
+                'api_printtype',
                 'api_question',
                 'api_unit',
                 'api_grade',

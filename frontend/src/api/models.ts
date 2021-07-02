@@ -23,7 +23,7 @@ export type TPrintType = TModelBase & {
 };
 
 export type TPrintDetail = TModelBase & {
-  unit: TUnit;
+  units: TUnit[];
   quantity: number;
 };
 

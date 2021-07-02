@@ -2,10 +2,13 @@ import {
   Box,
   Button,
   Checkbox,
+  createStyles,
   Divider,
   FormControlLabel,
   Grid,
+  makeStyles,
   TextField,
+  Theme,
   Typography,
 } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
@@ -13,6 +16,14 @@ import { apiPrints, TPrintHead } from "api";
 import { Indicator, RouterLink } from "components";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    listUnits: {
+      paddingLeft: theme.spacing(4),
+    },
+  })
+);
 
 const Cookies = () => {
   const { cookie } = document;
@@ -27,6 +38,7 @@ const Cookies = () => {
 };
 
 export default function PrintOut() {
+  const classes = useStyles();
   const { printId } = useParams<{ printId: string }>();
   const [data, setData] = useState<TPrintHead | undefined | null>(undefined);
 
@@ -97,7 +109,7 @@ export default function PrintOut() {
         </form>
       </Grid>
       <Grid item xs={12} sm={6}>
-        <Box my={2}>
+        <Box mb={2}>
           <Typography variant="subtitle1" component="h2">
             タイトル
           </Typography>
@@ -129,14 +141,21 @@ export default function PrintOut() {
             単元と問題数
           </Typography>
           <Divider />
-          <Box m={2} my={1}>
-            {data.details.map((detail, i) => {
-              return (
-                <div
-                  key={i}
-                >{`${detail.unit.grade.grade_text}：${detail.unit.unit_text} ー ${detail.quantity}問`}</div>
-              );
-            })}
+          <Box my={1}>
+            <ul className={classes.listUnits}>
+              {data.details.map((detail, i) => {
+                return (
+                  <li key={i}>
+                    {detail.units
+                      .map((u) => {
+                        return `${u.unit_text}(${u.grade.grade_text})`;
+                      })
+                      .join(", ")}
+                    から {detail.quantity}問
+                  </li>
+                );
+              })}
+            </ul>
           </Box>
         </Box>
       </Grid>
