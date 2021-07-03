@@ -1,10 +1,8 @@
 import {
   Box,
   Button,
-  Checkbox,
   createStyles,
   Divider,
-  FormControlLabel,
   Grid,
   makeStyles,
   TextField,
@@ -95,12 +93,12 @@ export default function PrintOut() {
               fullWidth
             />
           </Box>
-          <Box my={2}>
+          {/* <Box my={2}>
             <FormControlLabel
               control={<Checkbox name="archive" value={true} />}
               label="アーカイブに登録する"
             />
-          </Box>
+          </Box> */}
           <Box my={2}>
             <Button type="submit" color="primary" variant="contained">
               印刷

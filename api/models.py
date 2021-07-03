@@ -57,8 +57,8 @@ class Unit(models.Model):
             ),
         ]
 
-    # def __str__(self) -> str:
-    #     return f'{self.grade} {self.unit_text}'
+    def __str__(self) -> str:
+        return f'{self.grade} {self.unit_text}'
 
 
 class Question(models.Model):
@@ -148,6 +148,7 @@ class PrintHead(models.Model):
     class Meta:
         verbose_name = 'プリントヘッダ'
         verbose_name_plural = 'プリントヘッダ'
+        ordering = ['-id']
 
 
 class PrintDetail(models.Model):

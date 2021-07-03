@@ -44,27 +44,23 @@ function Top() {
       </Box>
       <Box m={4}>
         <Typography variant="body1">
-          こいつは数学・算数のプリントを作るアレです。
+          こいつは計算プリントを作る何かです。
         </Typography>
       </Box>
       <Box m={4}>
         <Typography variant="body1">
-          <RouterLink to="/prints">プリント作成</RouterLink>では
-          新しいプリントを作成できます。
+          <RouterLink to="/prints">プリント選択</RouterLink>
+          では、定義済みのプリント仕様から新しいプリントを作成できます。
           <br />
-          今の所は、計算コンテスト用のプリントしか作れません。
-          <br />
-          授業時の小テストに使えるプリントも作れるようにする予定。
+          プリント仕様を追加したい場合は、管理者に依頼してください。
         </Typography>
       </Box>
       <Box m={4}>
         <Typography variant="body1">
-          <RouterLink to="/archives">アーカイブ</RouterLink>では
-          過去に作成したプリントを再利用できます。
+          <RouterLink to="/archives">アーカイブ</RouterLink>
+          では、過去に作成したプリントを再利用できる予定です。
           <br />
-          プリントが溜まってきたときに、どうしたら探しやすくなるかなぁ。
-          <br />
-          ちょっと考えないとなぁ…。
+          まだ実装していません。
         </Typography>
       </Box>
     </>
