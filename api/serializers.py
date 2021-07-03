@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 from .models import Archive, Grade, PrintDetail, PrintHead, PrintType, Unit, Question
 
@@ -49,7 +50,12 @@ class PrintDetailSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
-        response['unit'] = UnitSerializer(instance.unit).data
+        i = 0
+        for unit in instance.units.all():
+            response['units'][i] = UnitSerializer(unit).data
+            i += 1
+
+        # response['unit'] = UnitSerializer(instance.unit).data
         return response
 
 
@@ -70,9 +76,13 @@ class PrintSerializer(serializers.ModelSerializer):
         if not details_data:
             raise serializers.ValidationError('単元と問題数を入力してください。')
 
-        printhead = PrintHead.objects.create(**validated_data)
-        for detail_data in details_data:
-            PrintDetail.objects.create(printhead=printhead, **detail_data)
+        with transaction.atomic():
+            printhead = PrintHead.objects.create(**validated_data)
+            for detail_data in details_data:
+                units = detail_data.pop('units')
+                printdetail = PrintDetail.objects.create(
+                    printhead=printhead, **detail_data)
+                printdetail.units.set(units)
 
         return printhead
 
@@ -81,9 +91,19 @@ class PrintSerializer(serializers.ModelSerializer):
         if not details_data:
             raise serializers.ValidationError('単元と問題数を入力してください。')
 
-        PrintDetail.objects.filter(printhead=instance).delete()
-        for detail_data in details_data:
-            PrintDetail.objects.create(printhead=instance, **detail_data)
-        instance.title = validated_data.get('title', instance.title)
-        instance.save()
+        with transaction.atomic():
+            PrintDetail.objects.filter(printhead=instance).delete()
+            for detail_data in details_data:
+                units = detail_data.pop('units')
+                printdetail = PrintDetail.objects.create(
+                    printhead=instance, **detail_data)
+                printdetail.units.set(units)
+
+            instance.title = validated_data.get('title', instance.title)
+            instance.description = validated_data.get(
+                'description', instance.description)
+            instance.printtype = validated_data.get(
+                'printtype', instance.printtype)
+            instance.save()
+
         return instance

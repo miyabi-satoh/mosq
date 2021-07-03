@@ -69,9 +69,16 @@ export default function PrintDetail() {
       </Typography>
       <Divider />
       <Box m={2} mt={1} mb={4}>
-        {data.details.map((detail) => {
+        {data.details.map((detail, i) => {
           return (
-            <div>{`${detail.unit.grade.grade_text}：${detail.unit.unit_text} ー ${detail.quantity}問`}</div>
+            <div key={i}>
+              {detail.units
+                .map((u) => {
+                  return `${u.unit_text}(${u.grade.grade_text})`;
+                })
+                .join(", ")}
+              から {detail.quantity}問
+            </div>
           );
         })}
       </Box>

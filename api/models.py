@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils import timezone
-from django.contrib import admin
 
 
 class Grade(models.Model):
@@ -143,19 +142,13 @@ class PrintHead(models.Model):
         verbose_name='形式'
     )
 
-    @admin.display(description='問題数')
-    def total_questions(self):
-        total = 0
-        for detail in self.details.all():
-            total += detail.quantity
-        return total
-
     def __str__(self) -> str:
         return self.title
 
     class Meta:
         verbose_name = 'プリントヘッダ'
         verbose_name_plural = 'プリントヘッダ'
+        ordering = ['-id']
 
 
 class PrintDetail(models.Model):
@@ -166,8 +159,8 @@ class PrintDetail(models.Model):
     ----------
     printhead : int
         PrintHeadへの外部キー。
-    unit : int
-        Unitへの外部キー。
+    units : int
+        Detail-Unit中間テーブルへの外部キー。
     quantity : int
         問題数。
     """
@@ -177,22 +170,20 @@ class PrintDetail(models.Model):
         on_delete=models.CASCADE,
         verbose_name='プリントヘッダ'
     )
-    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, verbose_name='単元')
+    # unit = models.ForeignKey(Unit, on_delete=models.CASCADE, verbose_name='単元')
+    units = models.ManyToManyField(Unit, verbose_name='単元')
     quantity = models.PositiveSmallIntegerField(verbose_name='問題数')
 
-    def __str__(self) -> str:
-        return f'{self.printhead} {self.unit} {self.quantity}問'
+    # def __str__(self) -> str:
+    #     if not self.units:
+    #         return f'{self.printhead} {self.quantity}問'
+    #     else:
+    #         return f'{self.printhead} {self.units} {self.quantity}問'
 
     class Meta:
-        ordering = ['printhead', 'unit']
+        ordering = ['printhead']
         verbose_name = 'プリント明細'
         verbose_name_plural = 'プリント明細'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['printhead', 'unit'],
-                name='printdetail_unique'
-            ),
-        ]
 
 
 class Archive(models.Model):

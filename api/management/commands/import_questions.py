@@ -8,28 +8,41 @@ from ...models import Grade, Unit
 
 
 class Command(BaseCommand):
-    help = 'Import questions from TeX file'
+    """
+    import_questions カスタムコマンド
+    python manage.py import_questions で実行できる
+    resources/計算問題.tex から問題をデータベースに投入する
+    """
+    help = 'Clear tables and import questions from TeX file.'
 
     def handle(self, *args, **options):
+        # resources/計算問題.tex へのパスを取得する
         path = os.path.dirname(__file__)
         path = os.path.join(path, '../../resources/計算問題.tex')
         path = os.path.normpath(path)
-        self.stdout.write(path)
+        # self.stdout.write(path)
 
         with open(path, encoding='utf-8') as f:
+            # 既存データを削除する
             tables = [
+                'api_printdetail_units',
                 'api_printdetail',
                 'api_printhead',
+                # 'api_printtype',
                 'api_question',
                 'api_unit',
                 'api_grade',
+                # 'api_archive',
             ]
             cursor = connection.cursor()
             for table in tables:
                 cursor.execute(f"DELETE FROM {table}")
+                self.stdout.write(f"DELETE FROM {table}")
+                # 自動採番もリセットする
                 cursor.execute(
                     f"DELETE FROM sqlite_sequence WHERE name = '{table}'")
 
+            # 学年マスタを作成する
             grade_list = [
                 '小1',
                 '小2',
@@ -57,6 +70,7 @@ class Command(BaseCommand):
                 # 改行削除
                 line = line.rstrip()
                 if (match := re.search(r'%define ([^ ]+) (\d{4}) (.+)$', line)):
+                    # 単元マスタを更新する
                     grade_text = match.group(1).strip()
                     unit_code = match.group(2).strip()
                     unit_text = match.group(3).strip()
@@ -66,8 +80,12 @@ class Command(BaseCommand):
                         sys.exit(f'grade not found : {grade_text}')
                     g.unit_set.create(unit_code=unit_code, unit_text=unit_text)
                 elif (match := re.search(r'%%URL (.+)$', line)):
+                    # 出典URLを保持しておく
                     url_text = match.group(1).strip()
                 elif re.search(r'\\item ', line):
+                    # 問題と解答を保持しておく
+                    # 問題->解答->問題->解答...を前提に isQuestion を反転させることで
+                    # 保存先リストを切り替える
                     if isQuestion:
                         question_list.append(f'{line}, {url_text}')
                     else:
