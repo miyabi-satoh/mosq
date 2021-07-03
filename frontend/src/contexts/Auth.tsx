@@ -1,4 +1,5 @@
 import { apiAuth, TUser } from "api";
+import { logger } from "helper";
 import React, { useEffect, useState } from "react";
 import { useContext } from "react";
 import { createContext } from "react";
@@ -63,7 +64,7 @@ function AuthProvider(props: React.PropsWithChildren<{}>) {
         user = undefined;
       } finally {
         if (!unmounted) {
-          console.log(user);
+          logger(user);
           setCurrentUser(user);
         }
       }

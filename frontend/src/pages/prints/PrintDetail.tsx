@@ -2,6 +2,7 @@ import { Box, Divider, Typography } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import { apiPrints, TPrintHead } from "api";
 import { Indicator, RouterLink } from "components";
+import { logger } from "helper";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -15,7 +16,7 @@ export default function PrintDetail() {
       let _data: TPrintHead | null = null;
       try {
         _data = await apiPrints.get(printId);
-        console.log(_data);
+        logger(_data);
       } catch (error) {
       } finally {
         if (!unmounted) {

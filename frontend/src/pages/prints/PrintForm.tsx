@@ -31,6 +31,7 @@ import { Indicator, RouterButton, RouterLink } from "components";
 import { useAuth } from "contexts/Auth";
 import { Alert } from "@material-ui/lab";
 import { AddCircle, RemoveCircle } from "@material-ui/icons";
+import { logger } from "helper";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -103,12 +104,12 @@ function PrintForm() {
       printtype: formData.printtype,
       details: formData.details.filter((d) => d.quantity > 0),
     };
-    console.log(params);
+    logger(params);
     try {
       const data = printId
         ? await apiPrints.update(printId, params)
         : await apiPrints.create(params);
-      console.log(data);
+      logger(data);
       history.push(backUrl);
     } catch (error) {
       if (error.response?.status === 400) {
@@ -137,7 +138,7 @@ function PrintForm() {
         _printTypeList = await apiMaster.printtypes();
         if (printId) {
           _fetchData = await apiPrints.get(printId);
-          console.log(_fetchData);
+          logger(_fetchData);
         }
       } catch (error) {}
 
@@ -196,10 +197,10 @@ function PrintForm() {
   }
 
   if (!!errors) {
-    console.log(errors);
+    logger(errors);
   }
   if (!!postErrors) {
-    console.log(postErrors);
+    logger(postErrors);
   }
 
   return (

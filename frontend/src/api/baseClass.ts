@@ -1,10 +1,11 @@
 import axios from "axios";
+import { logger } from "helper";
 
 function clg(error: any) {
-  console.log(error);
+  logger(error);
   if (error.response) {
     const { status, statusText } = error.response;
-    console.log(`Error ${status} : ${statusText}`);
+    logger(`Error ${status} : ${statusText}`);
   }
 }
 

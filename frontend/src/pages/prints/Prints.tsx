@@ -14,6 +14,7 @@ import { useAuth } from "contexts/Auth";
 import { AddCircleOutline } from "@material-ui/icons";
 import PrintForm from "./PrintForm";
 import PrintOut from "./PrintOut";
+import { logger } from "helper";
 
 const thisUrl = "/prints";
 
@@ -28,7 +29,7 @@ function Index() {
     const f = async () => {
       try {
         const data = await apiPrints.list();
-        console.log(data);
+        logger(data);
 
         if (!unmounted) {
           setPrintList(data.results);

@@ -13,17 +13,19 @@ import { useState, useEffect } from "react";
 import { Switch, Route } from "react-router-dom";
 import { TArchive, apiArchives } from "api";
 import { Spacer } from "components";
+import { logger } from "helper";
 
 function Index() {
-  const [archiveList, setArchiveList] =
-    useState<TArchive[] | undefined>(undefined);
+  const [archiveList, setArchiveList] = useState<TArchive[] | undefined>(
+    undefined
+  );
 
   const handleRemove = async (id: string) => {
     try {
       await apiArchives.delete(id);
 
       const data = await apiArchives.list();
-      console.log(data);
+      logger(data);
       setArchiveList(data.results);
     } catch (error) {}
   };
@@ -33,7 +35,7 @@ function Index() {
     const f = async () => {
       try {
         const data = await apiArchives.list();
-        console.log(data);
+        logger(data);
 
         if (!unmounted) {
           setArchiveList(data.results);
