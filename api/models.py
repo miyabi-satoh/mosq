@@ -111,8 +111,8 @@ class PrintType(models.Model):
 
     type_text = models.CharField('形式', max_length=100)
     method = models.CharField('メソッド', max_length=100)
-    template = models.FileField('テンプレート', upload_to='template')
-    cover = models.FileField('表紙', upload_to='cover', null=True, blank=True)
+    template = models.FileField('テンプレート', upload_to='templates')
+    cover = models.FileField('表紙', upload_to='covers', null=True, blank=True)
 
     def __str__(self) -> str:
         return self.type_text
@@ -209,7 +209,7 @@ class Archive(models.Model):
         on_delete=models.SET_NULL,
         verbose_name='プリントヘッダ'
     )
-    file = models.FileField('ファイル', upload_to='archive')
+    file = models.FileField('ファイル', upload_to='archives')
     title = models.CharField('タイトル', max_length=100)
     created_at = models.DateTimeField('作成日時', default=timezone.now)
 
