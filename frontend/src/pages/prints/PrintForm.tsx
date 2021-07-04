@@ -373,7 +373,11 @@ function PrintForm() {
                               key={`${fieldItem.id}-${unit.id}`}
                               value={unit.id}
                             >
-                              {`${grade.grade_text}:${unit.unit_text}(${unit.question_count})`}
+                              {`${grade.grade_text}:${unit.unit_text}(${
+                                unit.question_count! >= 100
+                                  ? "99+"
+                                  : unit.question_count
+                              })`}
                             </MenuItem>
                           );
                         })}

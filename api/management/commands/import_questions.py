@@ -1,10 +1,403 @@
 import os
 import sys
 import re
+from fractions import Fraction
 from typing import List
 from django.core.management.base import BaseCommand
 from django.db import connection
 from ...models import Grade, Unit
+
+
+def isFrac(x: Fraction) -> bool:
+    return x.denominator != 1
+
+
+def emath_bunsuu(x: Fraction) -> str:
+    b = x.denominator
+    a = x.numerator
+    sign = ''
+    if a < 0:
+        a *= -1
+        sign = '-'
+    if b < 0:
+        b *= -1
+        sign = '-'
+    if b == 1:
+        return f'{sign}{a}'
+
+    return sign + "\\bunsuu{" + f'{a}' + "}{" + f'{b}' + "}"
+
+
+def charaexp_addsub_question() -> int:
+    """
+    文字式の加法・減法を作る
+    """
+    u = Unit.objects.get(unit_code='0116')
+    if not u:
+        sys.exit('単元コードが未定義です : 0116')
+
+    count = 0
+    listNum: list[Fraction] = []
+    for a in range(-5, 6):
+        if a == 0:
+            continue
+        for b in range(1, 4):
+            if b == 0:
+                continue
+            x = Fraction(a, b)
+            if isFrac(x) and abs(x.numerator) > x.denominator:
+                # 仮分数は除外
+                continue
+            if x.denominator == b:
+                listNum.append(x)
+
+    # a(b + c)を表現するクラス
+    class CharaExpr:
+        def __init__(self, a, b, c) -> None:
+            self.a = Fraction(a)
+            self.b = Fraction(b)
+            self.c = Fraction(c)
+
+        def expandable(self) -> bool:
+            """
+            カッコの前の分数を展開して、分子式にできるか判定
+            """
+            if isFrac(self.a) and abs(self.a.numerator) == 1:  # a = 1/m
+                if (not isFrac(self.b)) and (not isFrac(self.c)):  # b,c = 整数
+                    ab = self.a * self.b
+                    ac = self.a * self.c
+                    if self.a.denominator == ab.denominator and self.a.denominator == ac.denominator:
+                        return True
+            return False
+
+        def __eq__(self, o: object) -> bool:
+            return self.a == o.a and self.b == o.b and self.c == o.c
+
+        def __str__(self) -> str:
+            inner = ''
+            if self.b == -1:
+                inner += '-'
+            elif self.b != 1:
+                inner += emath_bunsuu(self.b)
+            inner += 'a'
+
+            if self.c > 0:
+                inner += '+'
+                if self.c != 1:
+                    inner += emath_bunsuu(self.c)
+            elif self.c == -1:
+                inner += '-'
+            else:
+                inner += emath_bunsuu(self.c)
+            inner += "b"
+
+            if self.expandable():
+                sign = '-' if self.a < 0 else ''
+                return sign + "\\bunsuu{" + inner + "}{" + f'{self.a.denominator}' + "}"
+
+            if self.a == -1:
+                return "-\\left(" + inner + "\\right)"
+
+            if self.a != 1:
+                return emath_bunsuu(self.a) + "\\left(" + inner + "\\right)"
+
+            return inner
+
+    listCharaExpr: list[CharaExpr] = []
+    for a in listNum:
+        for b in listNum:
+            for c in listNum:
+                # 同数は除外する
+                if abs(a) == abs(b) or b == c:
+                    continue
+                # すべて分数は除外する
+                if isFrac(a) and isFrac(b) and isFrac(c):
+                    continue
+                # a が分数なら、b,cは整数
+                if isFrac(a) and (isFrac(b) or isFrac(c)):
+                    continue
+                # b,c分数なら異分母であること
+                if isFrac(b) and isFrac(c) and b.denominator == c.denominator:
+                    continue
+                listCharaExpr.append(CharaExpr(a, b, c))
+
+    for expr_a in listCharaExpr:
+        # カッコの前後は正の数
+        if expr_a.a < 0 or expr_a.b < 0:
+            continue
+        for expr_b in listCharaExpr:
+            # 公立入試問題の係数比較した感じで除外
+            if abs(expr_a.a) == abs(expr_b.a):  # A=D/ABS
+                continue
+            if expr_a.a == expr_b.c:            # A=F
+                continue
+            if expr_a.b == expr_b.a:            # B=D
+                continue
+            if abs(expr_a.b) == abs(expr_b.c):  # B=F/ABS
+                continue
+            if expr_a.c == expr_b.c:            # C=F
+                continue
+            if expr_b.a != 1 and expr_b.b < 0:  # a(-b...)
+                continue
+            if (not isFrac(expr_a.a)) and isFrac(expr_a.b) and isFrac(expr_a.c):
+                if expr_b.a != 1:
+                    continue
+                if isFrac(expr_b.b) and isFrac(expr_b.c):
+                    continue
+
+            aX = expr_a.a * expr_a.b
+            bX = expr_b.a * expr_b.b
+            ansX = aX + bX
+            if ansX.denominator > 9:
+                continue
+            if abs(ansX.numerator) > 9:
+                continue
+
+            aY = expr_a.a * expr_a.c
+            bY = expr_b.a * expr_b.c
+            ansY = aY + bY
+            if ansY.denominator > 9:
+                continue
+            if abs(ansY.numerator) > 9:
+                continue
+
+            if ansX == 0 and ansY == 0:
+                continue
+            if isFrac(ansX) and isFrac(ansY) and ansX.denominator != ansY.denominator:
+                continue
+
+            if ansX == 0:
+                ansX = ""
+            elif ansX == 1:
+                ansX = "a"
+            elif ansX == -1:
+                ansX = "-a"
+            else:
+                ansX = emath_bunsuu(ansX) + 'a'
+
+            if ansY == 0:
+                ansY = ""
+            elif ansY == 1:
+                ansY = "+b"
+            elif ansY == -1:
+                ansY = "-b"
+            else:
+                sign = '+' if ansX != 0 and ansY > 0 else ''
+                ansY = sign + emath_bunsuu(ansY) + 'b'
+
+            strA = str(expr_a)
+            strB = str(expr_b)
+            if expr_b.a > 0:
+                strB = '+' + strB
+
+            u.question_set.create(
+                question_text=f'${strA}{strB}$ を計算しなさい。',
+                answer_text=f'${ansX}{ansY}$',
+                source_text="自動生成"
+            )
+            count += 1
+            # if count > 1000:
+            #     return count
+
+    return count
+
+
+def ternary_number_question() -> int:
+    """
+    正負の三項計算を作る
+    """
+    u = Unit.objects.get(unit_code='0105')
+    if not u:
+        sys.exit('単元コードが未定義です : 0105')
+
+    # A : 正の整数・負の整数・0(-1, 1は含まない)
+    listA: list[int] = []
+    for x in range(-18, 19):
+        if abs(x) != 1:
+            listA.append(x)
+    # B : 正の整数・負の整数(-1, 0, 1は含まない)
+    listB: list[int] = []
+    for x in range(-18, 19):
+        if abs(x) > 1:
+            listB.append(x)
+    # C : 1桁, 分数アリ(-1, 0, 1は含まない)
+    listC: list[Fraction] = []
+    for x in range(-9, 10):
+        if x == 0:
+            continue
+        for y in range(1, 10):
+            c = Fraction(x, y)
+            if c.denominator != y or abs(c) == 1:
+                continue
+            listC.append(c)
+
+    count = 0
+    for a in listA:
+        for b in listB:
+            if a < 0 and b < 0:
+                continue
+            if abs(a) == abs(b):
+                continue
+            for c in listC:
+                if b < 0 and c < 0:
+                    continue
+                if a == 0 and b * c > 0:
+                    continue
+                if a < 0 and b < 0 and c < 0:
+                    continue
+                if abs(a) == abs(c) or abs(b) == abs(c):
+                    continue
+
+                for ex in range(1, 4):
+                    valA = a
+                    valB = b
+                    valC = c
+                    expA = ''
+                    expB = ''
+                    expC = ''
+                    negA = ''
+
+                    if ex == 1:
+                        if a == 0 or abs(a) > 4:
+                            # 0と5以上の2乗は除外
+                            continue
+                        valA = a * a
+                        expA = '^2'
+                        if a > 0 and b > 0:
+                            negA = '-'
+                            valA *= -1
+                    elif a < 0:       # 素の負数は除外
+                        continue
+                    if ex == 2:
+                        if abs(b) > 4:
+                            continue
+                        valB = b * b
+                        expB = '^2'
+                    if ex == 3:
+                        if c > 0 or abs(c.numerator) > 4 or c.denominator > 4:
+                            continue
+                        valC = c * c
+                        expC = '^2'
+
+                    for mul_div in ['*', '/']:
+                        if mul_div == '*':
+                            bc = b * c
+                            if isFrac(c):
+                                # 一発約分できるものは除外
+                                if abs(b) == c.denominator:
+                                    continue
+                                # 約分できないものも除外
+                                if bc.denominator == c.denominator:
+                                    continue
+                            opBC = " \\times "
+                            valBC = valB * valC
+                        else:
+                            bc = b / c
+                            if isFrac(c):
+                                # 約分できないものは除外
+                                if bc.denominator == abs(c.numerator):
+                                    continue
+                            opBC = " \\div "
+                            valBC = valB / valC
+                        if abs(valBC) > 15:
+                            continue
+
+                        for add_sub in ['+', '-']:
+                            if add_sub == '+':
+                                abc = valA + valBC
+                            else:
+                                if a == 0:
+                                    continue
+                                abc = valA - valBC
+
+                            if abs(abc.numerator) > 15 or abc.denominator > 15:
+                                continue
+
+                            expr = negA
+                            expr += f'{a}' if a > 0 else f'({a})'
+                            expr += expA
+                            expr += add_sub if a != 0 else ''
+                            expr += f'{b}' if b > 0 else f'({b})'
+                            expr += expB
+                            expr += opBC
+                            if c < 0 or (ex == 3 and isFrac(c)):
+                                expr += f"\\left({emath_bunsuu(c)}\\right)"
+                            else:
+                                expr += emath_bunsuu(c)
+                            expr += expC
+
+                            u.question_set.create(
+                                question_text=f'${expr}$ を計算しなさい。',
+                                answer_text=f'${emath_bunsuu(abc)}$',
+                                source_text="自動生成"
+                            )
+                            count += 1
+                            # if count > 1000:
+                            #     return count
+    return count
+
+
+def binary_number_question() -> int:
+    """
+    正負の二項計算を作る
+    """
+    u = Unit.objects.get(unit_code='0100')
+
+    # A : 正の数・負の数(-1, 0, 1は含まない)
+    # B : 負の数(-1は含まない)
+    listA: list[int] = []
+    listB: list[int] = []
+    for x in range(-18, 19):
+        if x == 0 or x == -1 or x == 1:
+            continue
+        listA.append(x)
+        if x < 0:
+            listB.append(x)
+
+    count = 0
+    for a in listA:
+        for b in listB:
+            if abs(a) == abs(b):
+                continue
+            if len(f'{abs(a)}{abs(b)}') > 3:    # 2桁同士の演算はスキップ
+                continue
+            for op in ['+', '-', '*', '/', '']:
+                if op == '+' or op == '':   # 加法
+                    c = Fraction(a + b)
+                elif op == '-':             # 減法
+                    c = Fraction(a - b)
+                elif op == '*':             # 乗法
+                    c = Fraction(a * b)
+                    op = "\\times "
+                elif op == '/':             # 除法
+                    c = Fraction(a, b)
+                    if isFrac(c):
+                        continue
+                    op = "\\div "
+
+                if abs(c) > 15:
+                    continue
+
+                lhs = a
+                rhs = b
+                if b < 0 and op != '':
+                    rhs = f'({b})'
+
+                expr = []
+                if lhs > 0:
+                    expr.append(f'{lhs}{op}{rhs}')
+                else:
+                    expr.append(f'{lhs}{op}{rhs}')
+                    expr.append(f'({lhs}){op}{rhs}')
+
+                for e in expr:
+                    u.question_set.create(
+                        question_text=f'${e}$ を計算しなさい。',
+                        answer_text=f'${c}$',
+                        source_text="自動生成"
+                    )
+                    count += 1
+    return count
 
 
 class Command(BaseCommand):
@@ -25,13 +418,13 @@ class Command(BaseCommand):
         with open(path, encoding='utf-8') as f:
             # 既存データを削除する
             tables = [
-                'api_printdetail_units',
-                'api_printdetail',
-                'api_printhead',
+                # 'api_printdetail_units',
+                # 'api_printdetail',
+                # 'api_printhead',
                 # 'api_printtype',
                 'api_question',
-                'api_unit',
-                'api_grade',
+                # 'api_unit',
+                # 'api_grade',
                 # 'api_archive',
             ]
             cursor = connection.cursor()
@@ -39,27 +432,41 @@ class Command(BaseCommand):
                 cursor.execute(f"DELETE FROM {table}")
                 self.stdout.write(f"DELETE FROM {table}")
                 # 自動採番もリセットする
-                cursor.execute(
-                    f"DELETE FROM sqlite_sequence WHERE name = '{table}'")
+                try:
+                    # sqlite3
+                    cursor.execute(
+                        f"DELETE FROM sqlite_sequence WHERE name = '{table}'")
+                except Exception:
+                    pass
 
-            # 学年マスタを作成する
-            grade_list = [
-                '小1',
-                '小2',
-                '小3',
-                '小4',
-                '小5',
-                '小6',
-                '中1',
-                '中2',
-                '中3',
-                '高1',
-                '高2',
-                '高3',
-            ]
-            for index, text in enumerate(grade_list):
-                g = Grade(grade_code=f'00{index + 1}'[-2:], grade_text=text)
-                g.save()
+                try:
+                    # postgresql
+                    cursor.execute(
+                        f"select setval ('{table}_id_seq', 1, false)"
+                    )
+                except Exception:
+                    pass
+
+            if Grade.objects.count() == 0:
+                # 学年マスタを作成する
+                grade_list = [
+                    '小1',
+                    '小2',
+                    '小3',
+                    '小4',
+                    '小5',
+                    '小6',
+                    '中1',
+                    '中2',
+                    '中3',
+                    '高1',
+                    '高2',
+                    '高3',
+                ]
+                for index, text in enumerate(grade_list):
+                    g = Grade(
+                        grade_code=f'00{index + 1}'[-2:], grade_text=text)
+                    g.save()
 
             isQuestion = True
             question_list: List[str] = []
@@ -78,7 +485,23 @@ class Command(BaseCommand):
                     g = Grade.objects.get(grade_text=grade_text)
                     if not g:
                         sys.exit(f'grade not found : {grade_text}')
-                    g.unit_set.create(unit_code=unit_code, unit_text=unit_text)
+                    try:
+                        u = Unit.objects.get(
+                            grade=g, unit_code=unit_code, unit_text=unit_text)
+                    except Unit.DoesNotExist:
+                        try:
+                            u = Unit.objects.get(grade=g, unit_code=unit_code)
+                            u.unit_text = unit_text
+                            u.save()
+                        except Unit.DoesNotExist:
+                            try:
+                                u = Unit.objects.get(
+                                    grade=g, unit_text=unit_text)
+                                u.unit_code = unit_code
+                                u.save()
+                            except Unit.DoesNotExist:
+                                g.unit_set.create(
+                                    unit_code=unit_code, unit_text=unit_text)
                 elif (match := re.search(r'%%URL (.+)$', line)):
                     # 出典URLを保持しておく
                     url_text = match.group(1).strip()
@@ -95,6 +518,14 @@ class Command(BaseCommand):
             if len(question_list) != len(answer_list):
                 sys.exit('問題と答えの数が違います。')
 
+            count = binary_number_question()
+            self.stdout.write(f'{count}問を自動生成しました。')
+            count = ternary_number_question()
+            self.stdout.write(f'{count}問を自動生成しました。')
+            count = charaexp_addsub_question()
+            self.stdout.write(f'{count}問を自動生成しました。')
+
+            count = 0
             for index, text in enumerate(question_list):
                 match = re.search(r'^(.*?)%%(.*?),(.*?),(.*?)$', text.strip())
                 if not match:
@@ -106,15 +537,17 @@ class Command(BaseCommand):
                 url_text = match.group(4).strip()
                 answer_text = answer_list[index].replace("\\item", '').strip()
 
-                u = Unit.objects.get(unit_code=unit_code)
-                if not u:
-                    sys.exit(f'単元コードが未定義です : {unit_code}')
+                if unit_code != '0100' and unit_code != '0105' and unit_code != '0116':
+                    u = Unit.objects.get(unit_code=unit_code)
+                    if not u:
+                        sys.exit(f'単元コードが未定義です : {unit_code}')
 
-                u.question_set.create(
-                    question_text=question_text,
-                    answer_text=answer_text,
-                    source_text=source_text,
-                    url_text=url_text
-                )
+                    u.question_set.create(
+                        question_text=question_text,
+                        answer_text=answer_text,
+                        source_text=source_text,
+                        url_text=url_text
+                    )
+                    count += 1
 
-            self.stdout.write('success.')
+            self.stdout.write(f'{count}問をインポートしました。')

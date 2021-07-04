@@ -22,6 +22,7 @@ cd ..
 python manage.py migrate
 python manage.py import_questions
 python manage.py loaddata api_printtype.json
+python manage.py createsuperuser
 mkdir media
 cp -a api/resources/templates media/
 ```
