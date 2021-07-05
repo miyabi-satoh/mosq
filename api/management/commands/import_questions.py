@@ -4,7 +4,7 @@ import re
 from fractions import Fraction
 from typing import List
 from django.core.management.base import BaseCommand
-from django.db import connection
+from django.db import connection, IntegrityError
 from ...models import Grade, Unit
 
 
@@ -28,11 +28,11 @@ def emath_bunsuu(x: Fraction) -> str:
     return sign + "\\bunsuu{" + f'{a}' + "}{" + f'{b}' + "}"
 
 
-def charaexp_addsub_question() -> int:
+def charaexp_addsub_question() -> str:
     """
     文字式の加法・減法を作る
     """
-    u = Unit.objects.get(unit_code='0116')
+    u = Unit.objects.get(unit_code='0201')
 
     count = 0
     listNum: list[Fraction] = []
@@ -263,7 +263,7 @@ def charaexp_addsub_question() -> int:
             # if count > 1000:
             #     return count
 
-    return count
+    return f'{count}問を自動生成しました。'
 
 
 def ternary_number_question() -> str:
@@ -399,10 +399,61 @@ def ternary_number_question() -> str:
                             count += 1
                             # if count > 1000:
                             #     return count
-    return f'{count}({zero_count})'
+    return f'{count}問を自動生成しました。'
 
 
-def binary_number_question() -> int:
+def exponents_question() -> str:
+    """
+    指数の問題を作る
+    """
+    u = Unit.objects.get(unit_code='0103')
+
+    c256 = 16 * 16
+    count = 0
+    for x in range(1, 11):
+        for y in range(2, 17):
+            xy = Fraction(y, x)
+            if xy.denominator != x:
+                continue
+            for e in range(2, 4):
+                # x^e
+                ans = xy ** e
+                if ans.numerator > c256 or ans.denominator > c256:
+                    continue
+                expr = emath_bunsuu(xy)
+                if xy.denominator != 1:
+                    expr = f'({expr})'
+                expr += f'^{e}'
+                u.question_set.create(
+                    question_text=f'${expr}$ を計算しなさい。',
+                    answer_text=f'${emath_bunsuu(ans)}$',
+                    source_text="自動生成"
+                )
+                count += 1
+
+                # (-x)^e
+                expr = f'(-{emath_bunsuu(xy)})^{e}'
+                u.question_set.create(
+                    question_text=f'${expr}$ を計算しなさい。',
+                    answer_text=f'${"-" if e == 3 else ""}{emath_bunsuu(ans)}$',
+                    source_text="自動生成"
+                )
+                count += 1
+
+                # -x^e
+                if xy.denominator != 1:
+                    continue
+                expr = f'-{xy}^{e}'
+                u.question_set.create(
+                    question_text=f'${expr}$ を計算しなさい。',
+                    answer_text=f'$-{ans}$',
+                    source_text="自動生成"
+                )
+                count += 1
+    return f'{count}問を自動生成しました。'
+
+
+def binary_number_question() -> str:
     """
     正負の二項計算を作る
     """
@@ -467,7 +518,7 @@ def binary_number_question() -> int:
                         source_text="自動生成"
                     )
                     count += 1
-    return count
+    return f'{count}問を自動生成しました。'
 
 
 class Command(BaseCommand):
@@ -588,12 +639,22 @@ class Command(BaseCommand):
             if len(question_list) != len(answer_list):
                 sys.exit('問題と答えの数が違います。')
 
-            count = binary_number_question()
-            self.stdout.write(f'{count}問を自動生成しました。')
-            count = ternary_number_question()
-            self.stdout.write(f'{count}問を自動生成しました。')
-            count = charaexp_addsub_question()
-            self.stdout.write(f'{count}問を自動生成しました。')
+            autogen_unit_codes = [
+                '0101', '0102', '0103', '0105', '0201'
+            ]
+            # 0101
+            # 0102
+            result = binary_number_question()
+            self.stdout.write(result)
+            # 0103
+            result = exponents_question()
+            self.stdout.write(result)
+            # 0105
+            result = ternary_number_question()
+            self.stdout.write(result)
+            # 0201
+            result = charaexp_addsub_question()
+            self.stdout.write(result)
 
             count = 0
             for index, text in enumerate(question_list):
@@ -607,17 +668,20 @@ class Command(BaseCommand):
                 url_text = match.group(4).strip()
                 answer_text = answer_list[index].replace("\\item", '').strip()
 
-                if unit_code != '0100' and unit_code != '0105' and unit_code != '0116':
+                if unit_code not in autogen_unit_codes:
                     u = Unit.objects.get(unit_code=unit_code)
                     if not u:
                         sys.exit(f'単元コードが未定義です : {unit_code}')
 
-                    u.question_set.create(
-                        question_text=question_text,
-                        answer_text=answer_text,
-                        source_text=source_text,
-                        url_text=url_text
-                    )
-                    count += 1
+                    try:
+                        u.question_set.create(
+                            question_text=question_text,
+                            answer_text=answer_text,
+                            source_text=source_text,
+                            url_text=url_text
+                        )
+                        count += 1
+                    except IntegrityError:
+                        self.stdout.write(question_text)
 
             self.stdout.write(f'{count}問をインポートしました。')
