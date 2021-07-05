@@ -33,8 +33,6 @@ def charaexp_addsub_question() -> int:
     文字式の加法・減法を作る
     """
     u = Unit.objects.get(unit_code='0116')
-    if not u:
-        sys.exit('単元コードが未定義です : 0116')
 
     count = 0
     listNum: list[Fraction] = []
@@ -110,20 +108,30 @@ def charaexp_addsub_question() -> int:
                 # 同数は除外する
                 if abs(a) == abs(b) or b == c:
                     continue
-                # すべて分数は除外する
-                if isFrac(a) and isFrac(b) and isFrac(c):
-                    continue
                 # a が分数なら、b,cは整数
-                if isFrac(a) and (isFrac(b) or isFrac(c)):
-                    continue
+                if isFrac(a):
+                    if isFrac(b) or isFrac(c):
+                        continue
+                    if a.denominator == abs(b) and a.denominator == abs(c):
+                        continue
                 # b,c分数なら異分母であること
                 if isFrac(b) and isFrac(c) and b.denominator == c.denominator:
                     continue
+                # 片っ端が分数なら、係数は1であること
+                if isFrac(b) != isFrac(c) and a != 1:
+                    continue
+                # カッコ内で偶数のみは除外
+                if (not isFrac(b)) and (not isFrac(c)):
+                    if b % 2 == 0 and c % 2 == 0:
+                        continue
                 listCharaExpr.append(CharaExpr(a, b, c))
 
     for expr_a in listCharaExpr:
         # カッコの前後は正の数
         if expr_a.a < 0 or expr_a.b < 0:
+            continue
+        # カッコ内で整数と分数は混在させない
+        if isFrac(expr_a.b) != isFrac(expr_a.c):
             continue
         for expr_b in listCharaExpr:
             # 公立入試問題の係数比較した感じで除外
@@ -139,11 +147,66 @@ def charaexp_addsub_question() -> int:
                 continue
             if expr_b.a != 1 and expr_b.b < 0:  # a(-b...)
                 continue
-            if (not isFrac(expr_a.a)) and isFrac(expr_a.b) and isFrac(expr_a.c):
-                if expr_b.a != 1:
+            # F は整数
+            if isFrac(expr_b.c):
+                continue
+            # A/D が分数なら異分母
+            if isFrac(expr_a.a) and isFrac(expr_b.a):
+                if expr_a.a.denominator == expr_b.a.denominator:
                     continue
-                if isFrac(expr_b.b) and isFrac(expr_b.c):
+
+            # if not expr_a.expandable() and not expr_b.expandable():
+            #     if isFrac(expr_a.a):
+            #         if abs(expr_b.a) > 1:
+            #             continue
+            #         if abs(expr_a.a) == abs(expr_b.b):
+            #             continue
+            #         if abs(expr_a.a) == abs(expr_b.c):
+            #             continue
+            #         if isFrac(expr_b.b) or isFrac(expr_b.c):
+            #             continue
+            #     if isFrac(expr_b.a):
+            #         if abs(expr_a.a) > 1:
+            #             continue
+            #         if abs(expr_b.a) == abs(expr_a.b):
+            #             continue
+            #         if abs(expr_b.a) == abs(expr_a.c):
+            #             continue
+
+            # 分数の数で仕分け
+            fracCount = 0
+            if isFrac(expr_a.a):
+                fracCount += 1
+            if isFrac(expr_a.b):
+                fracCount += 1
+            if isFrac(expr_a.c):
+                fracCount += 1
+            if isFrac(expr_b.a):
+                fracCount += 1
+            if isFrac(expr_b.b):
+                fracCount += 1
+            if isFrac(expr_b.c):
+                fracCount += 1
+
+            if fracCount > 3:
+                continue
+            if fracCount == 3:
+                if isFrac(expr_a.a) or isFrac(expr_b.a):
                     continue
+                if abs(expr_a.a) != 1 and abs(expr_b.a) != 1:
+                    continue
+
+            if expr_a.expandable():
+                if isFrac(expr_b.a) and not expr_b.expandable():
+                    continue
+            #     elif not expr_b.expandable():
+            #         continue
+
+            if expr_b.expandable():
+                if isFrac(expr_a.a) and not expr_a.expandable():
+                    continue
+            #     elif not expr_a.expandable():
+            #         continue
 
             aX = expr_a.a * expr_a.b
             bX = expr_b.a * expr_b.b
@@ -162,8 +225,6 @@ def charaexp_addsub_question() -> int:
                 continue
 
             if ansX == 0 and ansY == 0:
-                continue
-            if isFrac(ansX) and isFrac(ansY) and ansX.denominator != ansY.denominator:
                 continue
 
             if ansX == 0:
@@ -188,7 +249,10 @@ def charaexp_addsub_question() -> int:
             strA = str(expr_a)
             strB = str(expr_b)
             if expr_b.a > 0:
-                strB = '+' + strB
+                if expr_b.a == 1 and expr_b.b < 0:
+                    pass
+                else:
+                    strB = '+' + strB
 
             u.question_set.create(
                 question_text=f'${strA}{strB}$ を計算しなさい。',
@@ -202,23 +266,19 @@ def charaexp_addsub_question() -> int:
     return count
 
 
-def ternary_number_question() -> int:
+def ternary_number_question() -> str:
     """
     正負の三項計算を作る
     """
-    u = Unit.objects.get(unit_code='0105')
-    if not u:
-        sys.exit('単元コードが未定義です : 0105')
+    u = Unit.objects.get(unit_code='0105')  # 乗除混合
 
-    # A : 正の整数・負の整数・0(-1, 1は含まない)
-    listA: list[int] = []
-    for x in range(-18, 19):
-        if abs(x) != 1:
-            listA.append(x)
+    # A : 正の整数・負の整数(-1, 0, 1は含まない)
     # B : 正の整数・負の整数(-1, 0, 1は含まない)
+    listA: list[int] = []
     listB: list[int] = []
     for x in range(-18, 19):
         if abs(x) > 1:
+            listA.append(x)
             listB.append(x)
     # C : 1桁, 分数アリ(-1, 0, 1は含まない)
     listC: list[Fraction] = []
@@ -232,6 +292,7 @@ def ternary_number_question() -> int:
             listC.append(c)
 
     count = 0
+    zero_count = 0
     for a in listA:
         for b in listB:
             if a < 0 and b < 0:
@@ -314,9 +375,13 @@ def ternary_number_question() -> int:
                                 continue
 
                             expr = negA
-                            expr += f'{a}' if a > 0 else f'({a})'
-                            expr += expA
-                            expr += add_sub if a != 0 else ''
+                            if a != 0:
+                                expr += f'{a}' if a > 0 else f'({a})'
+                                expr += expA
+                                expr += add_sub
+                            else:
+                                zero_count += 1
+
                             expr += f'{b}' if b > 0 else f'({b})'
                             expr += expB
                             expr += opBC
@@ -334,14 +399,15 @@ def ternary_number_question() -> int:
                             count += 1
                             # if count > 1000:
                             #     return count
-    return count
+    return f'{count}({zero_count})'
 
 
 def binary_number_question() -> int:
     """
     正負の二項計算を作る
     """
-    u = Unit.objects.get(unit_code='0100')
+    u0101 = Unit.objects.get(unit_code='0101')  # 加減
+    u0102 = Unit.objects.get(unit_code='0102')  # 乗除
 
     # A : 正の数・負の数(-1, 0, 1は含まない)
     # B : 負の数(-1は含まない)
@@ -364,15 +430,19 @@ def binary_number_question() -> int:
             for op in ['+', '-', '*', '/', '']:
                 if op == '+' or op == '':   # 加法
                     c = Fraction(a + b)
+                    u = u0101
                 elif op == '-':             # 減法
                     c = Fraction(a - b)
+                    u = u0101
                 elif op == '*':             # 乗法
                     c = Fraction(a * b)
+                    u = u0102
                     op = "\\times "
                 elif op == '/':             # 除法
                     c = Fraction(a, b)
                     if isFrac(c):
                         continue
+                    u = u0102
                     op = "\\div "
 
                 if abs(c) > 15:
