@@ -12,6 +12,10 @@ def isFrac(x: Fraction) -> bool:
     return x.denominator != 1
 
 
+def isInteger(x: Fraction) -> bool:
+    return x.denominator == 1
+
+
 def emath_bunsuu(x: Fraction) -> str:
     b = x.denominator
     a = x.numerator
@@ -33,21 +37,6 @@ def charaexp_addsub_question() -> str:
     文字式の加法・減法を作る
     """
     u = Unit.objects.get(unit_code='0201')
-
-    count = 0
-    listNum: list[Fraction] = []
-    for a in range(-5, 6):
-        if a == 0:
-            continue
-        for b in range(1, 4):
-            if b == 0:
-                continue
-            x = Fraction(a, b)
-            if isFrac(x) and abs(x.numerator) > x.denominator:
-                # 仮分数は除外
-                continue
-            if x.denominator == b:
-                listNum.append(x)
 
     # a(b + c)を表現するクラス
     class CharaExpr:
@@ -93,120 +82,179 @@ def charaexp_addsub_question() -> str:
                 sign = '-' if self.a < 0 else ''
                 return sign + "\\bunsuu{" + inner + "}{" + f'{self.a.denominator}' + "}"
 
-            if self.a == -1:
-                return "-\\left(" + inner + "\\right)"
+            if self.a == 1:
+                return inner
 
-            if self.a != 1:
-                return emath_bunsuu(self.a) + "\\left(" + inner + "\\right)"
+            sign = '-' if self.a == -1 else emath_bunsuu(self.a)
+            if self.b.denominator != 1 or self.c.denominator != 1:
+                inner = f'\\left({inner}\\right)'
+            else:
+                inner = f'({inner})'
 
-            return inner
+            return sign + inner
+
+    count = 0
+    listNum: list[Fraction] = []
+    for a in range(-9, 10):
+        if a == 0:
+            continue
+        for b in range(1, 11):
+            if b == 0:
+                continue
+            x = Fraction(a, b)
+            if x.denominator != b:
+                continue
+            if isFrac(x) and abs(x.numerator) > 4:
+                continue
+            listNum.append(x)
 
     listCharaExpr: list[CharaExpr] = []
     for a in listNum:
+        if a.denominator > 4:
+            continue
+        if isFrac(a) and abs(a.numerator) > 2:
+            continue
         for b in listNum:
+            if isFrac(a) and isFrac(b):
+                continue
+
+            if a == b:
+                # a,bが同数はナシ
+                continue
+            if b < 0 and a != 1:
+                # bが負の数ならa=1
+                continue
+            if isFrac(b) and isFrac(a):
+                # bが分数ならaは整数
+                continue
             for c in listNum:
-                # 同数は除外する
-                if abs(a) == abs(b) or b == c:
+                if isFrac(a) and isFrac(b):
                     continue
-                # a が分数なら、b,cは整数
-                if isFrac(a):
-                    if isFrac(b) or isFrac(c):
-                        continue
-                    if a.denominator == abs(b) and a.denominator == abs(c):
-                        continue
-                # b,c分数なら異分母であること
-                if isFrac(b) and isFrac(c) and b.denominator == c.denominator:
+                if a < 0 and b < 0 and c < 0:
                     continue
-                # 片っ端が分数なら、係数は1であること
-                if isFrac(b) != isFrac(c) and a != 1:
-                    continue
-                # カッコ内で偶数のみは除外
-                if (not isFrac(b)) and (not isFrac(c)):
-                    if b % 2 == 0 and c % 2 == 0:
+                if isInteger(a) and isInteger(b) and isInteger(c):
+                    if abs(b) % 2 == 0 and abs(c) % 2 == 0:
                         continue
+                if isFrac(b) and isInteger(c):
+                    if a != 1:
+                        continue
+
+                if b == c:
+                    # b,cが同数はナシ
+                    continue
+                if a == c and abs(a) != 1:
+                    # a,cが同数は±1のみOK
+                    continue
+                if isFrac(c):
+                    # cが分数なら
+                    if abs(a) < 3:
+                        # aは±3以上の整数
+                        continue
+                    if isInteger(b):
+                        # bも分数
+                        continue
+                    if c.denominator == b.denominator:
+                        # bとは異分母
+                        continue
+                    if isFrac(b):
+                        if abs(b.numerator) != 1 and abs(c.numerator) != 1:
+                            continue
+                        ab = a * b
+                        ac = a * c
+                        if ab.denominator == b.denominator and ac.denominator == c.denominator:
+                            continue
+                        if isFrac(ab) and isFrac(ac):
+                            continue
+
                 listCharaExpr.append(CharaExpr(a, b, c))
 
     for expr_a in listCharaExpr:
-        # カッコの前後は正の数
-        if expr_a.a < 0 or expr_a.b < 0:
+        # a
+        if expr_a.a < 0 or 6 < expr_a.a:
+            # [0 ... 6]
             continue
-        # カッコ内で整数と分数は混在させない
-        if isFrac(expr_a.b) != isFrac(expr_a.c):
+        if expr_a.a == 1:
+            if expr_a.b < 1:
+                continue
+        # b
+        if expr_a.b < 0 or 8 < expr_a.b:
+            # [0 ... 8]
             continue
+        if isFrac(expr_a.b):
+            # 1/2, 3/2, 1/3, 2/3のみ
+            if expr_a.b.denominator > 3 or expr_a.b.numerator > 3:
+                continue
+            # cはマイナスのみ
+            if expr_a.c > 0:
+                continue
+        # c
+        if abs(expr_a.c) > 6:
+            # [-6 ... 6]
+            continue
+        if abs(expr_a.b) == abs(expr_a.c):
+            continue
+
         for expr_b in listCharaExpr:
-            # 公立入試問題の係数比較した感じで除外
-            if abs(expr_a.a) == abs(expr_b.a):  # A=D/ABS
+            if isFrac(expr_a.c) and isFrac(expr_b.c):
+                # cが分数ならc'は整数
                 continue
-            if expr_a.a == expr_b.c:            # A=F
-                continue
-            if expr_a.b == expr_b.a:            # B=D
-                continue
-            if abs(expr_a.b) == abs(expr_b.c):  # B=F/ABS
-                continue
-            if expr_a.c == expr_b.c:            # C=F
-                continue
-            if expr_b.a != 1 and expr_b.b < 0:  # a(-b...)
-                continue
-            # F は整数
-            if isFrac(expr_b.c):
-                continue
-            # A/D が分数なら異分母
             if isFrac(expr_a.a) and isFrac(expr_b.a):
-                if expr_a.a.denominator == expr_b.a.denominator:
+                if abs(expr_a.a.numerator) != 1 or abs(expr_b.a.numerator) != 1:
                     continue
-
-            # if not expr_a.expandable() and not expr_b.expandable():
-            #     if isFrac(expr_a.a):
-            #         if abs(expr_b.a) > 1:
-            #             continue
-            #         if abs(expr_a.a) == abs(expr_b.b):
-            #             continue
-            #         if abs(expr_a.a) == abs(expr_b.c):
-            #             continue
-            #         if isFrac(expr_b.b) or isFrac(expr_b.c):
-            #             continue
-            #     if isFrac(expr_b.a):
-            #         if abs(expr_a.a) > 1:
-            #             continue
-            #         if abs(expr_b.a) == abs(expr_a.b):
-            #             continue
-            #         if abs(expr_b.a) == abs(expr_a.c):
-            #             continue
-
-            # 分数の数で仕分け
-            fracCount = 0
-            if isFrac(expr_a.a):
-                fracCount += 1
-            if isFrac(expr_a.b):
-                fracCount += 1
-            if isFrac(expr_a.c):
-                fracCount += 1
-            if isFrac(expr_b.a):
-                fracCount += 1
-            if isFrac(expr_b.b):
-                fracCount += 1
-            if isFrac(expr_b.c):
-                fracCount += 1
-
-            if fracCount > 3:
+            # a'
+            if expr_b.a > 0 and isFrac(expr_b.a):
+                if expr_b.c > 0:
+                    continue
+            if abs(expr_b.a) > 5:
                 continue
-            if fracCount == 3:
-                if isFrac(expr_a.a) or isFrac(expr_b.a):
+            if expr_a.a == 1:
+                if abs(expr_b.a) > 1:
                     continue
-                if abs(expr_a.a) != 1 and abs(expr_b.a) != 1:
+                if isFrac(expr_b.a) and abs(expr_b.a.numerator) != 1:
+                    continue
+                if isFrac(expr_a.b):
+                    if isInteger(expr_b.a):
+                        continue
+            if abs(expr_a.a) == abs(expr_b.a):
+                continue
+            if expr_a.a == 1 and isFrac(expr_a.b):
+                if expr_a.b.denominator == expr_b.a.denominator:
+                    continue
+            if isFrac(expr_a.b) and isFrac(expr_a.c):
+                if abs(expr_b.a) != 1:
+                    continue
+                if expr_b.b > 0 and expr_b.c > 0:
+                    continue
+
+            # b'
+            if expr_a.b == expr_b.b:
+                continue
+            # c'
+            if abs(expr_b.b) == abs(expr_b.c):
+                if abs(expr_b.b) != 1:
                     continue
 
             if expr_a.expandable():
-                if isFrac(expr_b.a) and not expr_b.expandable():
+                if abs(expr_b.a) == 1:
+                    pass
+                elif expr_b.expandable():
+                    pass
+                else:
                     continue
-            #     elif not expr_b.expandable():
-            #         continue
-
             if expr_b.expandable():
-                if isFrac(expr_a.a) and not expr_a.expandable():
+                if abs(expr_a.a) == 1:
+                    pass
+                elif expr_a.expandable():
+                    pass
+                else:
                     continue
-            #     elif not expr_a.expandable():
-            #         continue
+            if expr_b.c > 0 and expr_a.a > 1:
+                continue
+            if expr_b.a > 0 and expr_b.b > 0 and expr_b.c > 0:
+                continue
+            if isFrac(expr_b.b) and isFrac(expr_b.c):
+                if isFrac(expr_a.a) or isFrac(expr_a.b) or isFrac(expr_a.c):
+                    continue
 
             aX = expr_a.a * expr_a.b
             bX = expr_b.a * expr_b.b
@@ -225,6 +273,10 @@ def charaexp_addsub_question() -> str:
                 continue
 
             if ansX == 0 and ansY == 0:
+                continue
+            if ansX < 0 and ansY < 0:
+                continue
+            if abs(ansX) == abs(ansY):
                 continue
 
             if ansX == 0:
@@ -260,8 +312,8 @@ def charaexp_addsub_question() -> str:
                 source_text="自動生成"
             )
             count += 1
-            # if count > 1000:
-            #     return count
+            # if count > 9999:
+            #     return "中断しました。"
 
     return f'{count}問を自動生成しました。'
 
@@ -402,63 +454,11 @@ def ternary_number_question() -> str:
     return f'{count}問を自動生成しました。'
 
 
-def exponents_question() -> str:
-    """
-    指数の問題を作る
-    """
-    u = Unit.objects.get(unit_code='0103')
-
-    c256 = 16 * 16
-    count = 0
-    for x in range(1, 11):
-        for y in range(2, 17):
-            xy = Fraction(y, x)
-            if xy.denominator != x:
-                continue
-            for e in range(2, 4):
-                # x^e
-                ans = xy ** e
-                if ans.numerator > c256 or ans.denominator > c256:
-                    continue
-                expr = emath_bunsuu(xy)
-                if xy.denominator != 1:
-                    expr = f'({expr})'
-                expr += f'^{e}'
-                u.question_set.create(
-                    question_text=f'${expr}$ を計算しなさい。',
-                    answer_text=f'${emath_bunsuu(ans)}$',
-                    source_text="自動生成"
-                )
-                count += 1
-
-                # (-x)^e
-                expr = f'(-{emath_bunsuu(xy)})^{e}'
-                u.question_set.create(
-                    question_text=f'${expr}$ を計算しなさい。',
-                    answer_text=f'${"-" if e == 3 else ""}{emath_bunsuu(ans)}$',
-                    source_text="自動生成"
-                )
-                count += 1
-
-                # -x^e
-                if xy.denominator != 1:
-                    continue
-                expr = f'-{xy}^{e}'
-                u.question_set.create(
-                    question_text=f'${expr}$ を計算しなさい。',
-                    answer_text=f'$-{ans}$',
-                    source_text="自動生成"
-                )
-                count += 1
-    return f'{count}問を自動生成しました。'
-
-
 def binary_number_question() -> str:
     """
     正負の二項計算を作る
     """
-    u0101 = Unit.objects.get(unit_code='0101')  # 加減
-    u0102 = Unit.objects.get(unit_code='0102')  # 乗除
+    u = Unit.objects.get(unit_code='0100')
 
     # A : 正の数・負の数(-1, 0, 1は含まない)
     # B : 負の数(-1は含まない)
@@ -481,19 +481,15 @@ def binary_number_question() -> str:
             for op in ['+', '-', '*', '/', '']:
                 if op == '+' or op == '':   # 加法
                     c = Fraction(a + b)
-                    u = u0101
                 elif op == '-':             # 減法
                     c = Fraction(a - b)
-                    u = u0101
                 elif op == '*':             # 乗法
                     c = Fraction(a * b)
-                    u = u0102
                     op = "\\times "
                 elif op == '/':             # 除法
                     c = Fraction(a, b)
                     if isFrac(c):
                         continue
-                    u = u0102
                     op = "\\div "
 
                 if abs(c) > 15:
@@ -639,15 +635,8 @@ class Command(BaseCommand):
             if len(question_list) != len(answer_list):
                 sys.exit('問題と答えの数が違います。')
 
-            autogen_unit_codes = [
-                '0101', '0102', '0103', '0105', '0201'
-            ]
-            # 0101
-            # 0102
+            # 0100
             result = binary_number_question()
-            self.stdout.write(result)
-            # 0103
-            result = exponents_question()
             self.stdout.write(result)
             # 0105
             result = ternary_number_question()
@@ -668,20 +657,19 @@ class Command(BaseCommand):
                 url_text = match.group(4).strip()
                 answer_text = answer_list[index].replace("\\item", '').strip()
 
-                if unit_code not in autogen_unit_codes:
-                    u = Unit.objects.get(unit_code=unit_code)
-                    if not u:
-                        sys.exit(f'単元コードが未定義です : {unit_code}')
+                u = Unit.objects.get(unit_code=unit_code)
+                if not u:
+                    sys.exit(f'単元コードが未定義です : {unit_code}')
 
-                    try:
-                        u.question_set.create(
-                            question_text=question_text,
-                            answer_text=answer_text,
-                            source_text=source_text,
-                            url_text=url_text
-                        )
-                        count += 1
-                    except IntegrityError:
-                        self.stdout.write(question_text)
+                try:
+                    u.question_set.create(
+                        question_text=question_text,
+                        answer_text=answer_text,
+                        source_text=source_text,
+                        url_text=url_text
+                    )
+                    count += 1
+                except IntegrityError:
+                    self.stdout.write(question_text)
 
             self.stdout.write(f'{count}問をインポートしました。')
