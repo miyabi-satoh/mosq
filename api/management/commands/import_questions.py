@@ -8,6 +8,137 @@ from django.db import connection, IntegrityError
 from ...models import Grade, Unit
 
 
+class CharaExpr:
+    """
+    文字式 a(bx + cy) を表現するクラス
+    """
+
+    def __init__(self, a, b, c, x='x', y='y') -> None:
+        self.a = Fraction(a)
+        self.b = Fraction(b)
+        self.c = Fraction(c)
+        self.x = x
+        self.y = y
+
+    def isExpandable(self) -> bool:
+        """
+        カッコの前の分数を展開して、分子式にできるか判定
+        """
+        if isFrac(self.a) and abs(self.a.numerator) == 1:  # a = 1/m
+            if (not isFrac(self.b)) and (not isFrac(self.c)):  # b,c = 整数
+                ab = self.a * self.b
+                ac = self.a * self.c
+                if self.a.denominator == ab.denominator and self.a.denominator == ac.denominator:
+                    return True
+        return False
+
+    def getInnerStr(self) -> str:
+        """
+        カッコ内 bx + cy の文字列化
+        """
+        bx = to_product(self.b, self.x)
+        cy = to_product(self.c, self.y)
+        if self.c > 0:
+            cy = '+' + cy
+
+        return bx + cy
+
+        # inner = ''
+        # if self.b == -1:
+        #     inner += '-'
+        # elif self.b != 1:
+        #     inner += emath_bunsuu(self.b)
+        # inner += self.x
+
+        # if self.c > 0:
+        #     inner += '+'
+        #     if self.c != 1:
+        #         inner += emath_bunsuu(self.c)
+        #     elif self.y == '':
+        #         inner += '1'
+        # elif self.c == -1:
+        #     inner += '-'
+        #     if self.y == '':
+        #         inner += '1'
+        # else:
+        #     inner += emath_bunsuu(self.c)
+        # inner += self.y
+
+    def __eq__(self, o: object) -> bool:
+        return self.a == o.a and self.b == o.b and self.c == o.c
+
+    def __str__(self) -> str:
+        # inner = ''
+        # if self.b == -1:
+        #     inner += '-'
+        # elif self.b != 1:
+        #     inner += emath_bunsuu(self.b)
+        # inner += self.x
+
+        # if self.c > 0:
+        #     inner += '+'
+        #     if self.c != 1:
+        #         inner += emath_bunsuu(self.c)
+        #     elif self.y == '':
+        #         inner += '1'
+        # elif self.c == -1:
+        #     inner += '-'
+        #     if self.y == '':
+        #         inner += '1'
+        # else:
+        #     inner += emath_bunsuu(self.c)
+        # inner += self.y
+
+        inner = self.getInnerStr()
+        if self.isExpandable():
+            sign = '-' if self.a < 0 else ''
+            return sign + "\\bunsuu{" + inner + "}{" + f'{self.a.denominator}' + "}"
+
+        if self.a == 1:
+            return inner
+
+        sign = '-' if self.a == -1 else emath_bunsuu(self.a)
+        if self.b.denominator != 1 or self.c.denominator != 1:
+            inner = f'\\left({inner}\\right)'
+        else:
+            inner = f'({inner})'
+
+        return sign + inner
+
+
+def getNumbers(r: int, m: int) -> List[Fraction]:
+    listNum: list[Fraction] = []
+    for a in range(r * -1, r + 1):
+        if a == 0:
+            continue
+        for b in range(1, m + 1):
+            if b == 0:
+                continue
+            x = Fraction(a, b)
+            if x.denominator != b:
+                continue
+            if isFrac(x) and abs(x.numerator) > 4:
+                continue
+            listNum.append(x)
+
+    return listNum
+
+
+def to_product(n: Fraction, c: str) -> str:
+    """
+    文字式の積の形を返す
+    """
+    if c == '':
+        return emath_bunsuu(n)
+    if n == 0:
+        return '0'
+    if n == 1:
+        return c
+    if n == -1:
+        return f'-{c}'
+    return emath_bunsuu(n) + c
+
+
 def isFrac(x: Fraction) -> bool:
     return x.denominator != 1
 
@@ -32,82 +163,7 @@ def emath_bunsuu(x: Fraction) -> str:
     return sign + "\\bunsuu{" + f'{a}' + "}{" + f'{b}' + "}"
 
 
-def charaexp_addsub_question() -> str:
-    """
-    文字式の加法・減法を作る
-    """
-    u = Unit.objects.get(unit_code='0201')
-
-    # a(b + c)を表現するクラス
-    class CharaExpr:
-        def __init__(self, a, b, c) -> None:
-            self.a = Fraction(a)
-            self.b = Fraction(b)
-            self.c = Fraction(c)
-
-        def expandable(self) -> bool:
-            """
-            カッコの前の分数を展開して、分子式にできるか判定
-            """
-            if isFrac(self.a) and abs(self.a.numerator) == 1:  # a = 1/m
-                if (not isFrac(self.b)) and (not isFrac(self.c)):  # b,c = 整数
-                    ab = self.a * self.b
-                    ac = self.a * self.c
-                    if self.a.denominator == ab.denominator and self.a.denominator == ac.denominator:
-                        return True
-            return False
-
-        def __eq__(self, o: object) -> bool:
-            return self.a == o.a and self.b == o.b and self.c == o.c
-
-        def __str__(self) -> str:
-            inner = ''
-            if self.b == -1:
-                inner += '-'
-            elif self.b != 1:
-                inner += emath_bunsuu(self.b)
-            inner += 'a'
-
-            if self.c > 0:
-                inner += '+'
-                if self.c != 1:
-                    inner += emath_bunsuu(self.c)
-            elif self.c == -1:
-                inner += '-'
-            else:
-                inner += emath_bunsuu(self.c)
-            inner += "b"
-
-            if self.expandable():
-                sign = '-' if self.a < 0 else ''
-                return sign + "\\bunsuu{" + inner + "}{" + f'{self.a.denominator}' + "}"
-
-            if self.a == 1:
-                return inner
-
-            sign = '-' if self.a == -1 else emath_bunsuu(self.a)
-            if self.b.denominator != 1 or self.c.denominator != 1:
-                inner = f'\\left({inner}\\right)'
-            else:
-                inner = f'({inner})'
-
-            return sign + inner
-
-    count = 0
-    listNum: list[Fraction] = []
-    for a in range(-9, 10):
-        if a == 0:
-            continue
-        for b in range(1, 11):
-            if b == 0:
-                continue
-            x = Fraction(a, b)
-            if x.denominator != b:
-                continue
-            if isFrac(x) and abs(x.numerator) > 4:
-                continue
-            listNum.append(x)
-
+def getCharaExprs(listNum: List[Fraction], charX='x', charY='y') -> List[CharaExpr]:
     listCharaExpr: list[CharaExpr] = []
     for a in listNum:
         if a.denominator > 4:
@@ -166,8 +222,202 @@ def charaexp_addsub_question() -> str:
                         if isFrac(ab) and isFrac(ac):
                             continue
 
-                listCharaExpr.append(CharaExpr(a, b, c))
+                listCharaExpr.append(CharaExpr(a, b, c, charX, charY))
+    return listCharaExpr
 
+
+def integer_addsub_question() -> str:
+    """
+    整数のたし算・ひき算
+    """
+    count = 0
+
+    u_add: List[Unit] = []
+    u_sub: List[Unit] = []
+    for x in range(0, 3):
+        u = Unit.objects.get(unit_code=f'100{x}')
+        u_add.append(u)
+        u = Unit.objects.get(unit_code=f'101{x}')
+        u_sub.append(u)
+
+    for a in range(1, 10):
+        for b in range(1, 10):
+            x = a + b
+            for c in range(0, 10):
+                lhs = a + c * 10
+                for d in range(0, 10):
+                    carried = 0
+                    if a + b > 9:
+                        carried += 1
+                    if c + d + carried > 9:
+                        carried += 1
+
+                    rhs = b + d * 10
+                    ans = lhs + rhs
+
+                    u_add[carried].question_set.create(
+                        question_text=f'${lhs}+{rhs} = $',
+                        answer_text=f'${ans}$',
+                        source_text="自動生成"
+                    )
+                    u_sub[carried].question_set.create(
+                        question_text=f'${ans}-{rhs} = $',
+                        answer_text=f'${lhs}$',
+                        source_text="自動生成"
+                    )
+                    count += 1
+
+    return f'{count}問を自動生成しました。'
+
+
+def charaexp_mul_question() -> str:
+    """
+    文字式 × 数を作る
+    """
+    u = Unit.objects.get(unit_code="0117")
+
+    listNum = getNumbers(9, 10)
+    listCharExpr = getCharaExprs(listNum, 'x', '')
+
+    count = 0
+    for e in listCharExpr:
+        if e.isExpandable():
+            if e.a < 0:
+                continue
+            for x in range(-9, 10):
+                if abs(x) <= 1:
+                    continue
+                if abs(x) % e.a.denominator == 0:
+                    expr = str(e) + '\\times '
+                    if x < 0:
+                        expr += f'\\left({x}\\right)'
+                    else:
+                        expr += f'{x}'
+                    ansX = to_product(e.a * e.b * x, e.x)
+                    ansY = e.a * e.c * x
+                    if ansY > 0:
+                        ans = f'{ansX}+{ansY}'
+                    else:
+                        ans = f'{ansX}{ansY}'
+
+                    u.question_set.create(
+                        question_text=f'${expr}$ を計算しなさい。',
+                        answer_text=f'${ans}$',
+                        source_text="自動生成"
+                    )
+                    count += 1
+        elif abs(e.a) != 1:
+            expr = f'\\left({e.getInnerStr()}\\right)'
+            expr += '\\times '
+            if e.a > 0:
+                expr += emath_bunsuu(e.a)
+            else:
+                expr += f'\\left({emath_bunsuu(e.a)}\\right)'
+
+            ansX = to_product(e.a * e.b, e.x)
+            ansY = e.a * e.c
+            if ansY > 0:
+                ans = f'{ansX}+{emath_bunsuu(ansY)}'
+            else:
+                ans = f'{ansX}{emath_bunsuu(ansY)}'
+
+            u.question_set.create(
+                question_text=f'${expr}$ を計算しなさい。',
+                answer_text=f'${ans}$',
+                source_text="自動生成"
+            )
+            count += 1
+
+    return f'{count}問を自動生成しました。'
+
+
+def charaexp_addsub_question(unit_code: str) -> str:
+    """
+    文字式の加法・減法を作る
+    """
+    u = Unit.objects.get(unit_code=unit_code)
+    charX = 'x'
+    if unit_code[1] == '1':
+        charY = ''
+    else:
+        charY = 'y'
+
+    # listNum: list[Fraction] = []
+    # for a in range(-9, 10):
+    #     if a == 0:
+    #         continue
+    #     for b in range(1, 11):
+    #         if b == 0:
+    #             continue
+    #         x = Fraction(a, b)
+    #         if x.denominator != b:
+    #             continue
+    #         if isFrac(x) and abs(x.numerator) > 4:
+    #             continue
+    #         listNum.append(x)
+
+    listNum = getNumbers(9, 10)
+    listCharaExpr: list[CharaExpr] = []
+    for a in listNum:
+        if a.denominator > 4:
+            continue
+        if isFrac(a) and abs(a.numerator) > 2:
+            continue
+        for b in listNum:
+            if isFrac(a) and isFrac(b):
+                continue
+
+            if a == b:
+                # a,bが同数はナシ
+                continue
+            if b < 0 and a != 1:
+                # bが負の数ならa=1
+                continue
+            if isFrac(b) and isFrac(a):
+                # bが分数ならaは整数
+                continue
+            for c in listNum:
+                if isFrac(a) and isFrac(b):
+                    continue
+                if a < 0 and b < 0 and c < 0:
+                    continue
+                if isInteger(a) and isInteger(b) and isInteger(c):
+                    if abs(b) % 2 == 0 and abs(c) % 2 == 0:
+                        continue
+                if isFrac(b) and isInteger(c):
+                    if a != 1:
+                        continue
+
+                if b == c:
+                    # b,cが同数はナシ
+                    continue
+                if a == c and abs(a) != 1:
+                    # a,cが同数は±1のみOK
+                    continue
+                if isFrac(c):
+                    # cが分数なら
+                    if abs(a) < 3:
+                        # aは±3以上の整数
+                        continue
+                    if isInteger(b):
+                        # bも分数
+                        continue
+                    if c.denominator == b.denominator:
+                        # bとは異分母
+                        continue
+                    if isFrac(b):
+                        if abs(b.numerator) != 1 and abs(c.numerator) != 1:
+                            continue
+                        ab = a * b
+                        ac = a * c
+                        if ab.denominator == b.denominator and ac.denominator == c.denominator:
+                            continue
+                        if isFrac(ab) and isFrac(ac):
+                            continue
+
+                listCharaExpr.append(CharaExpr(a, b, c, charX, charY))
+
+    count = 0
     for expr_a in listCharaExpr:
         # a
         if expr_a.a < 0 or 6 < expr_a.a:
@@ -234,17 +484,17 @@ def charaexp_addsub_question() -> str:
                 if abs(expr_b.b) != 1:
                     continue
 
-            if expr_a.expandable():
+            if expr_a.isExpandable():
                 if abs(expr_b.a) == 1:
                     pass
-                elif expr_b.expandable():
+                elif expr_b.isExpandable():
                     pass
                 else:
                     continue
-            if expr_b.expandable():
+            if expr_b.isExpandable():
                 if abs(expr_a.a) == 1:
                     pass
-                elif expr_a.expandable():
+                elif expr_a.isExpandable():
                     pass
                 else:
                     continue
@@ -276,27 +526,32 @@ def charaexp_addsub_question() -> str:
                 continue
             if ansX < 0 and ansY < 0:
                 continue
+            if ansX > 0 and ansY > 0:
+                continue
             if abs(ansX) == abs(ansY):
                 continue
 
-            if ansX == 0:
-                ansX = ""
-            elif ansX == 1:
-                ansX = "a"
-            elif ansX == -1:
-                ansX = "-a"
-            else:
-                ansX = emath_bunsuu(ansX) + 'a'
+            ansX = to_product(ansX, charX)
+            if ansX == '0':
+                ansX = ''
 
-            if ansY == 0:
-                ansY = ""
-            elif ansY == 1:
-                ansY = "+b"
-            elif ansY == -1:
-                ansY = "-b"
-            else:
-                sign = '+' if ansX != 0 and ansY > 0 else ''
-                ansY = sign + emath_bunsuu(ansY) + 'b'
+            op = ''
+            if ansX != '' and ansY > 0:
+                op = '+'
+
+            ansY = to_product(ansY, charY)
+            if ansY == '0':
+                ansY = ''
+
+            # if ansY == 0:
+            #     ansY = ""
+            # elif ansY == 1:
+            #     ansY = "+" + charY
+            # elif ansY == -1:
+            #     ansY = "-" + ("1" if charY == '' else charY)
+            # else:
+            #     sign = '+' if ansX != 0 and ansY > 0 else ''
+            #     ansY = sign + emath_bunsuu(ansY) + charY
 
             strA = str(expr_a)
             strB = str(expr_b)
@@ -308,7 +563,7 @@ def charaexp_addsub_question() -> str:
 
             u.question_set.create(
                 question_text=f'${strA}{strB}$ を計算しなさい。',
-                answer_text=f'${ansX}{ansY}$',
+                answer_text=f'${ansX}{op}{ansY}$',
                 source_text="自動生成"
             )
             count += 1
@@ -579,6 +834,9 @@ class Command(BaseCommand):
                     '高1',
                     '高2',
                     '高3',
+                    '小学',
+                    '中学',
+                    '高校'
                 ]
                 for index, text in enumerate(grade_list):
                     g = Grade(
@@ -635,15 +893,24 @@ class Command(BaseCommand):
             if len(question_list) != len(answer_list):
                 sys.exit('問題と答えの数が違います。')
 
-            # 0100
+            # 0100：正負の二項計算
             result = binary_number_question()
-            self.stdout.write(result)
-            # 0105
+            self.stdout.write("0100 : " + result)
+            # 0105：正負の四則混合
             result = ternary_number_question()
-            self.stdout.write(result)
-            # 0201
-            result = charaexp_addsub_question()
-            self.stdout.write(result)
+            self.stdout.write("0105 : " + result)
+            # 0117：分子式×数
+            result = charaexp_mul_question()
+            self.stdout.write("0117 : " + result)
+            # 0118：展開と整理
+            result = charaexp_addsub_question('0118')
+            self.stdout.write("0118 : " + result)
+            # 0201：多項式の計算
+            result = charaexp_addsub_question('0201')
+            self.stdout.write("0201 : " + result)
+            # 100x, 101x：たし算、ひき算
+            result = integer_addsub_question()
+            self.stdout.write("10xx : " + result)
 
             count = 0
             for index, text in enumerate(question_list):
