@@ -796,29 +796,31 @@ class Command(BaseCommand):
             except Exception:
                 pass
 
-        if Grade.objects.count() == 0:
-            # 学年マスタを作成する
-            grade_list = [
-                '小1',
-                '小2',
-                '小3',
-                '小4',
-                '小5',
-                '小6',
-                '中1',
-                '中2',
-                '中3',
-                '高1',
-                '高2',
-                '高3',
-                '小学',
-                '中学',
-                '高校'
-            ]
-            for index, text in enumerate(grade_list):
-                g = Grade(
-                    grade_code=f'00{index + 1}'[-2:], grade_text=text)
-                g.save()
+        # 学年マスタを作成する
+        grade_list = [
+            '小1',
+            '小2',
+            '小3',
+            '小4',
+            '小5',
+            '小6',
+            '中1',
+            '中2',
+            '中3',
+            '高1',
+            '高2',
+            '高3',
+            '小学',
+            '中学',
+            '高校'
+        ]
+        for index, text in enumerate(grade_list):
+            (g, created) = Grade.objects.filter(grade_text=text).get_or_create(
+                grade_code=f'00{index + 1}'[-2:],
+                grade_text=text
+            )
+            if created:
+                self.stdout.write(f'Grade={text}を追加。')
 
         isQuestion = True
         question_list: List[str] = []
