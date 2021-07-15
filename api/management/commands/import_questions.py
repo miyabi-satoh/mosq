@@ -276,7 +276,7 @@ def charaexp_mul_question() -> str:
                         ans = f'{ansX}{ansY}'
 
                     u.question_set.create(
-                        question_text=f'${expr}$ を計算しなさい。',
+                        question_text=f'${expr}$\\quad を計算しなさい。',
                         answer_text=f'${ans}$',
                         source_text="自動生成"
                     )
@@ -297,7 +297,7 @@ def charaexp_mul_question() -> str:
                 ans = f'{ansX}{emath_bunsuu(ansY)}'
 
             u.question_set.create(
-                question_text=f'${expr}$ を計算しなさい。',
+                question_text=f'${expr}$\\quad を計算しなさい。',
                 answer_text=f'${ans}$',
                 source_text="自動生成"
             )
@@ -545,7 +545,7 @@ def charaexp_addsub_question(unit_code: str) -> str:
                     strB = '+' + strB
 
             u.question_set.create(
-                question_text=f'${strA}{strB}$ を計算しなさい。',
+                question_text=f'${strA}{strB}$\\quad を計算しなさい。',
                 answer_text=f'${ansX}{op}{ansY}$',
                 source_text="自動生成"
             )
@@ -682,7 +682,7 @@ def ternary_number_question() -> str:
                             expr += expC
 
                             u.question_set.create(
-                                question_text=f'${expr}$ を計算しなさい。',
+                                question_text=f'${expr}$\\quad を計算しなさい。',
                                 answer_text=f'${emath_bunsuu(abc)}$',
                                 source_text="自動生成"
                             )
@@ -747,11 +747,183 @@ def binary_number_question() -> str:
 
                 for e in expr:
                     u.question_set.create(
-                        question_text=f'${e}$ を計算しなさい。',
+                        question_text=f'${e}$\\quad を計算しなさい。',
                         answer_text=f'${c}$',
                         source_text="自動生成"
                     )
                     count += 1
+    return f'{count}問を自動生成しました。'
+
+
+def linear_equation_level3() -> str:
+    """
+    3ステップで解く一次方程式
+    """
+    u = Unit.objects.get(unit_code='0122')
+    listNum = getNumbers(9, 10)
+    count = 0
+    for a in listNum:
+        if isFrac(a):
+            continue
+        for b in listNum:
+            if isFrac(b):
+                continue
+            if a == b:
+                continue
+            for c in listNum:
+                if isFrac(c):
+                    continue
+                for d in listNum:
+                    if isFrac(d):
+                        continue
+                    if c == d:
+                        continue
+
+                    if a > 0 and b > 0 and c > 0 and d > 0:
+                        continue
+                    if a < 0 and b < 0 and c < 0 and d < 0:
+                        continue
+
+                    que = to_product(a, 'x')
+                    if c > 0:
+                        que += '+'
+                    que += f'{emath_bunsuu(c)}='
+                    que += to_product(b, 'x')
+                    if d > 0:
+                        que += '+'
+                    que += emath_bunsuu(d)
+
+                    lhs = a - b
+                    if lhs == 0:
+                        continue
+                    rhs = d - c
+                    ans = rhs / lhs
+                    if abs(ans) > 12:
+                        continue
+                    if isFrac(ans):
+                        if abs(ans.numerator) == abs(rhs):
+                            if ans.denominator == abs(lhs):
+                                continue
+
+                    u.question_set.create(
+                        question_text=f'方程式\\quad${que}$\\quad を解きなさい。',
+                        answer_text=f'$x={emath_bunsuu(ans)}$',
+                        source_text="自動生成"
+                    )
+                    count += 1
+
+    return f'{count}問を自動生成しました。'
+
+
+def linear_equation_level2() -> str:
+    """
+    2ステップで解く一次方程式
+    """
+    u = Unit.objects.get(unit_code='0121')
+    listNum = getNumbers(9, 10)
+
+    count = 0
+    for a in listNum:
+        if a == 1:
+            continue
+        for b in listNum:
+            if abs(a) == abs(b):
+                continue
+            for c in listNum:
+                if abs(a) == abs(c):
+                    continue
+                if abs(b) == abs(c):
+                    continue
+                if a < 0 and b < 0 and c < 0:
+                    continue
+
+                frac_count = 0
+                if isFrac(a):
+                    frac_count += 1
+                if isFrac(b):
+                    frac_count += 1
+                if isFrac(c):
+                    frac_count += 1
+                if frac_count > 1:
+                    continue
+
+                que = to_product(a, 'x')
+                if b > 0:
+                    que += '+'
+                que += f'{emath_bunsuu(b)}'
+                que += f'={emath_bunsuu(c)}'
+
+                ans = (c - b) / a
+                if abs(ans) > 12:
+                    continue
+                if isFrac(ans) and (ans.denominator > 12 or abs(ans.numerator) > 12):
+                    continue
+
+                u.question_set.create(
+                    question_text=f'方程式\\quad${que}$\\quad を解きなさい。',
+                    answer_text=f'$x={emath_bunsuu(ans)}$',
+                    source_text="自動生成"
+                )
+                count += 1
+
+    return f'{count}問を自動生成しました。'
+
+
+def linear_equation_level1() -> str:
+    """
+    1ステップで解く一次方程式
+    """
+    u = Unit.objects.get(unit_code='0120')
+    listNum = getNumbers(9, 10)
+
+    count = 0
+    for a in listNum:
+        for b in listNum:
+            if isFrac(a) and isFrac(b):
+                continue
+            que = 'x'
+            if a > 0:
+                que += '+'
+            que += f'{emath_bunsuu(a)}'
+            que += f'={emath_bunsuu(b)}'
+
+            ans = b - a
+            if abs(ans) > 12:
+                continue
+            if isFrac(ans) and (ans.denominator > 12 or abs(ans.numerator) > 12):
+                continue
+
+            u.question_set.create(
+                question_text=f'方程式\\quad${que}$\\quad を解きなさい。',
+                answer_text=f'$x={emath_bunsuu(ans)}$',
+                source_text="自動生成"
+            )
+            count += 1
+
+    for a in listNum:
+        if abs(a) == 1:
+            continue
+        for b in listNum:
+            if isFrac(a) and isFrac(b):
+                continue
+            que = f'{emath_bunsuu(a)}x={emath_bunsuu(b)}'
+            ans = b / a
+
+            if isFrac(ans):
+                if ans.denominator > 12 or abs(ans.numerator) > 12:
+                    continue
+            else:
+                abs_ans = abs(ans)
+                if abs_ans == 1 or abs_ans > 12:
+                    continue
+
+            u.question_set.create(
+                question_text=f'方程式\\quad${que}$\\quad を解きなさい。',
+                answer_text=f'$x={emath_bunsuu(ans)}$',
+                source_text="自動生成"
+            )
+            count += 1
+
     return f'{count}問を自動生成しました。'
 
 
@@ -891,6 +1063,15 @@ class Command(BaseCommand):
         # 0118：展開と整理
         result = charaexp_addsub_question('0118')
         self.stdout.write("0118 : " + result)
+        # 0120：一次方程式
+        result = linear_equation_level1()
+        self.stdout.write("0120 : " + result)
+        # 0121：一次方程式
+        result = linear_equation_level2()
+        self.stdout.write("0121 : " + result)
+        # 0121：一次方程式
+        result = linear_equation_level3()
+        self.stdout.write("0122 : " + result)
         # 0201：多項式の計算
         result = charaexp_addsub_question('0201')
         self.stdout.write("0201 : " + result)
@@ -912,6 +1093,10 @@ class Command(BaseCommand):
             url_text = match.group(4).strip()
             answer_text = answer_list[index].replace(
                 "\\item", '').strip()
+
+            if unit_code == '0116':
+                # 自動生成実装につき、文字式の計算(中1)はスキップ
+                continue
 
             u = Unit.objects.get(unit_code=unit_code)
             if not u:
