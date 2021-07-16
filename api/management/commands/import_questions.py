@@ -25,9 +25,10 @@ class CharaExpr:
         カッコの前の分数を展開して、分子式にできるか判定
         """
         if isFrac(self.a) and abs(self.a.numerator) == 1:  # a = 1/m
-            if (not isFrac(self.b)) and (not isFrac(self.c)):  # b,c = 整数
+            if isInteger(self.b) and isInteger(self.c):  # b,c = 整数
                 ab = self.a * self.b
                 ac = self.a * self.c
+                # 展開して約分が発生する場合はNG
                 if self.a.denominator == ab.denominator and self.a.denominator == ac.denominator:
                     return True
         return False
@@ -94,7 +95,11 @@ def getNumbers(r: int, m: int) -> List[Fraction]:
 
 def to_product(n: Fraction, c: str) -> str:
     """
-    文字式の積の形を返す
+    n : Fraction
+        係数
+    c : str
+        文字
+    文字式の積の形(nc)を返す
     """
     if c == '':
         return emath_bunsuu(n)
@@ -109,6 +114,8 @@ def to_product(n: Fraction, c: str) -> str:
 
 def isFrac(x: Fraction) -> bool:
     """
+    x : Fraction
+        判定対象
     分数かどうか判定する
     """
     return x.denominator != 1
@@ -116,12 +123,19 @@ def isFrac(x: Fraction) -> bool:
 
 def isInteger(x: Fraction) -> bool:
     """
+    x : Fraction
+        判定対象
     整数かどうか判定する
     """
     return x.denominator == 1
 
 
 def emath_bunsuu(x: Fraction) -> str:
+    """
+    x : Fraction
+        操作対象
+    bunsuu{a}{b}を作る
+    """
     b = x.denominator
     a = x.numerator
     sign = ''
@@ -136,6 +150,15 @@ def emath_bunsuu(x: Fraction) -> str:
 
 
 def getCharaExprs(listNum: List[Fraction], charX='x', charY='y') -> List[CharaExpr]:
+    """
+    listNum : List[Fraction]
+        使用する数のリスト
+    charX : str
+        初項の文字
+    charY : str
+        二項目の文字
+    CharExprのリストを作成する
+    """
     listCharaExpr: list[CharaExpr] = []
     for a in listNum:
         if a.denominator > 4:
@@ -853,11 +876,15 @@ def linear_equation_level2() -> str:
                 que += f'{emath_bunsuu(b)}'
                 que += f'={emath_bunsuu(c)}'
 
-                ans = (c - b) / a
+                right = c - b
+                ans = right / a
                 if abs(ans) > 12:
                     continue
-                if isFrac(ans) and (ans.denominator > 12 or abs(ans.numerator) > 12):
-                    continue
+                if isFrac(ans):
+                    if ans.denominator > 12 or abs(ans.numerator) > 12:
+                        continue
+                    if ans.denominator == abs(a) and abs(ans.numerator) == abs(right):
+                        continue
 
                 u.question_set.create(
                     question_text=f'方程式\\quad${que}$\\quad を解きなさい。',
