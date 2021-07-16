@@ -26,6 +26,7 @@ export const theme = createMuiTheme({
     },
     fontFamily: [
       "Roboto",
+      '"Meiryo UI"',
       '"M PLUS Rounded 1c"',
       "-apple-system",
       "BlinkMacSystemFont",
