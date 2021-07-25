@@ -26,6 +26,8 @@ export const theme = createMuiTheme({
     },
     fontFamily: [
       "Roboto",
+      "メイリオ",
+      "Meiryo",
       '"Meiryo UI"',
       '"M PLUS Rounded 1c"',
       "-apple-system",
