@@ -1121,24 +1121,18 @@ class Command(BaseCommand):
             answer_text = answer_list[index].replace(
                 "\\item", '').strip()
 
-            if unit_code == '0116':
-                # 自動生成実装につき、文字式の計算(中1)はスキップ
-                continue
-
             u = Unit.objects.get(unit_code=unit_code)
-            if not u:
-                sys.exit(f'単元コードが未定義です : {unit_code}')
-
-            try:
-                q = Question.objects.get(question_text=question_text)
-                self.stdout.write(q.question_text)
-            except Question.DoesNotExist:
-                u.question_set.create(
-                    question_text=question_text,
-                    answer_text=answer_text,
-                    source_text=source_text,
-                    url_text=url_text
-                )
+            (q, created) = Question.objects.get_or_create(
+                question_text=question_text,
+                defaults={
+                    'unit': u,
+                    'answer_text': answer_text,
+                    'source_text': source_text,
+                    'url_text': url_text
+                })
+            if created:
                 count += 1
+            else:
+                self.stdout.write(f"{question_text}, {source_text}")
 
         self.stdout.write(f'{count}問をインポートしました。')
