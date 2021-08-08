@@ -1,0 +1,179 @@
+%%%%% 8h耐久用
+\documentclass[uplatex,a4j,11pt]{jsarticle}
+\usepackage[hmargin=10mm,vmargin=15mm]{geometry}
+\usepackage{emath}
+\usepackage{bxpapersize}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+
+\setlength\parindent{0pt}
+
+\setlist[enumerate]{
+leftmargin=*,
+itemindent=0pt,
+itemsep=2mm,
+labelsep=1em,
+label=(\arabic*)}
+
+\pagestyle{fancy}
+\lhead{2021年　8時間耐久特訓　数学}
+\rhead[]{}
+\begin{document}
+
+◎Level1 \hfill 1桁の計算 \hfill ここはノーミスだよね☆
+
+\begin{minipage}[t][8.1cm][t]{\linewidth}
+  \begin{multicols}{2}
+    \begin{enumerate}
+      % for item in level1:
+      \item @[item.question\_text]@
+      % endfor
+    \end{enumerate}
+  \end{multicols}
+\end{minipage}
+
+\vfill
+
+\begin{flushright}
+  \underline{正解数：\hspace{6em}}
+\end{flushright}
+
+\newpage
+
+◎Level2 \hfill 2桁と1桁の計算 \hfill 1つ1つ落ち着いて解きましょう！
+　
+\begin{minipage}[t][8.1cm][t]{\linewidth}
+  \begin{multicols}{2}
+    \begin{enumerate}
+      % for item in level2:
+      \item @[item.question\_text]@
+      % endfor
+    \end{enumerate}
+  \end{multicols}
+\end{minipage}
+
+\vfill
+
+\begin{flushright}
+  \underline{正解数：\hspace{6em}}
+\end{flushright}
+
+\newpage
+
+◎Level3 \hfill 2桁と2桁の計算 \hfill そろそろ厳しいかな？
+　
+\begin{minipage}[t][8.1cm][t]{\linewidth}
+  \begin{multicols}{2}
+    \begin{enumerate}
+      % for item in level3:
+      \item @[item.question\_text]@
+      % endfor
+    \end{enumerate}
+  \end{multicols}
+\end{minipage}
+
+\vfill
+
+\begin{flushright}
+  \underline{正解数：\hspace{6em}}
+\end{flushright}
+
+\newpage
+
+% for set in level4:
+◎Level4 \hfill 全部 \hfill ここからは今までのごちゃ混ぜです！
+　
+\begin{minipage}[t][8.1cm][t]{\linewidth}
+  \begin{multicols}{2}
+    \begin{enumerate}
+      % for item in set:
+      \item @[item.question\_text]@
+      % endfor
+    \end{enumerate}
+  \end{multicols}
+\end{minipage}
+
+\vfill
+
+\begin{flushright}
+  \underline{正解数：\hspace{6em}}
+\end{flushright}
+
+\newpage
+% endfor
+
+\lhead{2021年　8時間耐久特訓　数学　解答}
+
+◎Level1 \hfill 1桁の計算 \hfill ここはノーミスだよね☆
+
+\begin{minipage}[t][8.1cm][t]{\linewidth}
+  \begin{multicols}{2}
+    \begin{enumerate}
+      % for item in level1:
+      \item @[item.answer\_text]@
+      % endfor
+    \end{enumerate}
+  \end{multicols}
+\end{minipage}
+
+\newpage
+
+◎Level2 \hfill 2桁と1桁の計算 \hfill 1つ1つ落ち着いて解きましょう！
+　
+\begin{minipage}[t][8.1cm][t]{\linewidth}
+  \begin{multicols}{2}
+    \begin{enumerate}
+      % for item in level2:
+      \item @[item.answer\_text]@
+      % endfor
+    \end{enumerate}
+  \end{multicols}
+\end{minipage}
+
+\newpage
+
+◎Level3 \hfill 2桁と2桁の計算 \hfill そろそろ厳しいかな？
+　
+\begin{minipage}[t][8.1cm][t]{\linewidth}
+  \begin{multicols}{2}
+    \begin{enumerate}
+      % for item in level3:
+      \item @[item.answer\_text]@
+      % endfor
+    \end{enumerate}
+  \end{multicols}
+\end{minipage}
+
+\vfill
+
+\begin{flushright}
+  \underline{正解数：\hspace{6em}}
+\end{flushright}
+
+\newpage
+
+% for set in level4:
+◎Level4 \hfill 全部 \hfill ここからは今までのごちゃ混ぜです！
+　
+\begin{minipage}[t][8.1cm][t]{\linewidth}
+  \begin{multicols}{2}
+    \begin{enumerate}
+      % for item in set:
+      \item @[item.answer\_text]@
+      % endfor
+    \end{enumerate}
+  \end{multicols}
+\end{minipage}
+
+\vfill
+
+\begin{flushright}
+  \underline{正解数：\hspace{6em}}
+\end{flushright}
+
+\newpage
+% endfor
+
+\end{document}
